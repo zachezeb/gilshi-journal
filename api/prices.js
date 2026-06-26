@@ -72,9 +72,9 @@ export default async function handler(req, res) {
       await Promise.all(missing.slice(i, i + BATCH).map(fetchItem));
     }
 
-    if (debug) return res.status(200).json({ prices: out, trace });
+    if (debug) return res.status(200).json({ prices: out, updated: Date.now(), trace });
     res.setHeader("Cache-Control", "s-maxage=1800, stale-while-revalidate=3600");
-    return res.status(200).json(out);
+    return res.status(200).json({ prices: out, updated: Date.now(), realm: req.query.realm || null });
   } catch (e) {
     return res.status(200).json({ error: String((e && e.message) || e).slice(0, 200), prices: {} });
   }
