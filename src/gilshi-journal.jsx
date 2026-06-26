@@ -32,10 +32,10 @@ const HAND = "'Segoe Script','Bradley Hand','Brush Script MT',cursive";
 /* ── DATA ───────────────────────────────────────────────────── */
 const HERBS = [
   { id:236761, gid:236767, name:"Tranquility Bloom", latin:"Flos tranquillitatis", no:"01", role:"common potion base", tier:"common", est:8,  vel:10, color:C.sage },
-  { id:236776, name:"Argentleaf",        latin:"Folium argenteum",     no:"02", role:"flask reagent",       tier:"common", est:14, vel:8,  color:C.verdigris },
-  { id:236774, name:"Azeroot",           latin:"Radix azerothi",       no:"03", role:"potion base",         tier:"common", est:9,  vel:7,  color:C.verdigris },
-  { id:236778, name:"Mana Lily",         latin:"Lilium manae",         no:"04", role:"inscription & potions",tier:"common", est:11, vel:8,  color:C.ink2 },
-  { id:236770, name:"Sanguithorn",       latin:"Spina sanguinea",      no:"05", role:"flask reagent",       tier:"uncommon",est:22, vel:6,  color:C.sanguine },
+  { id:236776, gid:236777, name:"Argentleaf",        latin:"Folium argenteum",     no:"02", role:"flask reagent",       tier:"common", est:14, vel:8,  color:C.verdigris },
+  { id:236774, gid:236775, name:"Azeroot",           latin:"Radix azerothi",       no:"03", role:"potion base",         tier:"common", est:9,  vel:7,  color:C.verdigris },
+  { id:236778, gid:236779, name:"Mana Lily",         latin:"Lilium manae",         no:"04", role:"inscription & potions",tier:"common", est:11, vel:8,  color:C.ink2 },
+  { id:236770, gid:236771, name:"Sanguithorn",       latin:"Spina sanguinea",      no:"05", role:"flask reagent",       tier:"uncommon",est:22, vel:6,  color:C.sanguine },
   { id:236780, name:"Nocturnal Lotus",   latin:"Lotus nocturna",       no:"06", role:"rare flask gate · gathered by chance",tier:"premium",est:180,vel:4,color:C.lotus },
 ];
 const HERB = id => HERBS.find(h=>h.id===id);
@@ -63,14 +63,14 @@ const PRODUCTS = [
   { id:241317, name:"Haranir Phial of Perception",  cat:"Phial", kind:"vial",  role:"gathering · rare-find buff",     est:85,  vel:4, mats:[{h:236774,q:3},{h:236778,q:2}], tradeable:true },
   // ── Light potions ──
   { id:241309, name:"Light's Potential",            cat:"Light Potion", kind:"potion", role:"safe stat potion · bulk seller", est:55, vel:10, mats:[{h:236761,q:8},{h:236774,q:3},{h:236776,q:3}], tradeable:true },
-  { id:241296, name:"Potion of Zealotry",           cat:"Light Potion", kind:"potion", role:"Light combat variant",     est:48, vel:6, mats:[{h:236761,q:6},{h:236774,q:3}], tradeable:true },
-  { id:241300, name:"Lightfused Mana Potion",       cat:"Light Potion", kind:"potion", role:"healer mana potion",       est:42, vel:8, mats:[{h:236761,q:8},{h:236778,q:3}], tradeable:true },
-  { id:241305, name:"Silvermoon Health Potion",     cat:"Light Potion", kind:"potion", role:"health · off combat CD",   est:30, vel:9, mats:[{h:236761,q:6}], tradeable:true },
+  { id:241296, gid:241297, name:"Potion of Zealotry",           cat:"Light Potion", kind:"potion", role:"Light combat variant",     est:48, vel:6, mats:[{h:236761,q:6},{h:236774,q:3}], tradeable:true },
+  { id:241300, gid:241301, name:"Lightfused Mana Potion",       cat:"Light Potion", kind:"potion", role:"healer mana potion",       est:42, vel:8, mats:[{h:236761,q:8},{h:236778,q:3}], tradeable:true },
+  { id:241305, gid:241304, name:"Silvermoon Health Potion",     cat:"Light Potion", kind:"potion", role:"health · off combat CD",   est:30, vel:9, mats:[{h:236761,q:6}], tradeable:true },
   { id:237055, name:"Refreshing Serum",             cat:"Light Potion", kind:"potion", role:"early utility · Stone mat", est:25, vel:4, mats:[{h:236761,q:8},{h:236770,q:3}], tradeable:true },
   // ── Void potions ──
   { id:241292, name:"Draught of Rampant Abandon",   cat:"Void Potion", kind:"potion", role:"more stats · puddle silences", est:70, vel:6, mats:[{h:236780,q:1},{h:236770,q:2}], tradeable:true },
   { id:241295, name:"Potion of Devoured Dreams",    cat:"Void Potion", kind:"potion", role:"void utility · risk/reward",   est:60, vel:4, mats:[{h:236770,q:3},{h:236778,q:2}], tradeable:true },
-  { id:268954, name:"Entropic Extract",             cat:"Void Potion", kind:"potion", role:"early void leveling potion",   est:22, vel:3, mats:[{h:236761,q:3}], tradeable:true },
+  { id:268954, gid:268955, name:"Entropic Extract",             cat:"Void Potion", kind:"potion", role:"early void leveling potion",   est:22, vel:3, mats:[{h:236761,q:3}], tradeable:true },
   // ── Reagents / transmute products ──
   { id:237200, name:"Wondrous Synergist",           cat:"Reagent", kind:"vial", role:"daily · value unproven",      est:260, vel:2, mats:[{h:236780,q:1},{h:236776,q:5}], cooldown:"18h", tradeable:true },
   { id:237201, name:"Composite Flora",              cat:"Reagent", kind:"vial", role:"crafted reagent · feeds recipes", est:40, vel:5, mats:[{h:236761,q:6},{h:236776,q:4}], tradeable:true },
@@ -315,11 +315,13 @@ function rankHerbs(price){
   const scored = HERBS.map(h=>{
     const pa = price(h.id) ?? null;
     const pb = h.gid ? (price(h.gid) ?? null) : null;
-    const both = [pa, pb].filter(v=>v!=null);
-    const saleGold   = both.length ? Math.max(...both) : (h.est ?? null);
-    const saleSilver = both.length>1 ? Math.min(...both) : (both.length ? both[0] : (h.est ?? null));
+    let saleGold=null, saleSilver=null;
+    if(pa!=null && pb!=null){ saleGold=Math.max(pa,pb); saleSilver=Math.min(pa,pb); }
+    else if(pa!=null){ saleSilver=pa; }
+    else if(pb!=null){ saleSilver=pb; }
+    else { saleSilver=h.est ?? null; }
     const baseline = saleSilver ?? h.est ?? 0;
-    return { id:h.id, item:h, price:baseline, saleSilver, saleGold, vel:h.vel??0, score:saleGold ?? baseline };
+    return { id:h.id, item:h, price:baseline, saleSilver, saleGold, vel:h.vel??0, score:(saleGold ?? baseline) };
   }).sort((a,b)=> b.score-a.score || b.vel-a.vel );
   return scored.map((s,i)=>({ ...s, rank:i+1, grade:gradeFor(i,scored.length), why:HERB_NOTE[s.id]||s.item.role }));
 }
@@ -334,14 +336,17 @@ function rankCraft(price){
   const scored = sellable.map(prod=>{
     const pa = price(prod.id) ?? null;
     const pb = prod.gid ? (price(prod.gid) ?? null) : null;
-    const both = [pa, pb].filter(v=>v!=null);
-    const saleGold   = both.length ? Math.max(...both) : (prod.est ?? null);
-    const saleSilver = both.length>1 ? Math.min(...both) : (both.length ? both[0] : (prod.est ?? null));
-    const baseline = saleSilver ?? prod.est ?? 0;   // rank by the silver/baseline price
+    // only call it a gold/silver pair when we truly have TWO live prices
+    let saleGold=null, saleSilver=null;
+    if(pa!=null && pb!=null){ saleGold=Math.max(pa,pb); saleSilver=Math.min(pa,pb); }
+    else if(pa!=null){ saleSilver=pa; }            // single price = the base (silver)
+    else if(pb!=null){ saleSilver=pb; }
+    else { saleSilver=prod.est ?? null; }          // fall back to estimate
+    const baseline = saleSilver ?? prod.est ?? 0;
     const herbCost = (prod.mats||[]).reduce((s,m)=>{ const h=HERB(m.h); return s + (h?((price(h.id)??h.est??0)*m.q):0); },0);
     return { id:prod.id, item:prod, sale:baseline, saleSilver, saleGold, herbCost,
              marginGathered:baseline, marginBuy:baseline-herbCost, margin:baseline,
-             vel:prod.vel??0, score:saleGold ?? baseline };
+             vel:prod.vel??0, score:(saleGold ?? baseline) };
   }).sort((a,b)=> b.score-a.score || b.vel-a.vel );
   return scored.map((s,i)=>({ ...s, rank:i+1, grade:gradeFor(i,scored.length), why:ALCH_NOTE[s.id]||s.item.role }));
 }
@@ -389,13 +394,13 @@ const COLLECTIONS = {
 };
 
 const ZONES = [
-  {name:"Eversong Woods",difficulty:"gentle",mote:"Mote of Light",color:C.ochre,notes:"even ground, few foes · follow the rivers, where nodes gather thickest",
+  {name:"Eversong Woods",difficulty:"gentle",mote:"Mote of Light",color:C.ochre,terrain:"woods",notes:"even ground, few foes · follow the rivers, where nodes gather thickest",
    nodes:[[20,30],[35,25],[50,35],[65,28],[78,40],[70,58],[55,65],[40,60],[28,52],[22,42]],river:[[15,48],[35,50],[55,55],[75,50],[88,58]]},
-  {name:"Zul'Aman",difficulty:"trying",mote:"Mote of Wild Magic",color:C.sanguine,notes:"crowded · carry Deftness or be interrupted · richest in Argentleaf & Azeroot",
+  {name:"Zul'Aman",difficulty:"trying",mote:"Mote of Wild Magic",color:C.sanguine,terrain:"ruins",notes:"crowded · carry Deftness or be interrupted · richest in Argentleaf & Azeroot",
    nodes:[[25,35],[42,30],[58,38],[72,32],[80,48],[68,60],[50,68],[32,62],[20,50]],river:[]},
-  {name:"Harandar",difficulty:"severe",mote:"Mote of Primal Energy",color:C.verdigris,notes:"vertical thicket, dense with foes · four treasures wait here",
+  {name:"Harandar",difficulty:"severe",mote:"Mote of Primal Energy",color:C.verdigris,terrain:"thicket",notes:"vertical thicket, dense with foes · four treasures wait here",
    nodes:[[30,22],[50,18],[68,25],[78,42],[72,60],[55,70],[38,66],[25,50],[42,45],[60,48]],river:[]},
-  {name:"Voidstorm",difficulty:"harsh",mote:"Mote of Pure Void",color:C.plum,notes:"a hostile maze · the sole Pure Void source · bring all the Deftness you can",
+  {name:"Voidstorm",difficulty:"harsh",mote:"Mote of Pure Void",color:C.plum,terrain:"void",notes:"a hostile maze · the sole Pure Void source · bring all the Deftness you can",
    nodes:[[22,40],[38,28],[55,32],[70,26],[82,44],[74,62],[58,70],[40,64],[28,55]],river:[]},
 ];
 
@@ -458,85 +463,128 @@ const SPEC_TREES = {
     branches:[
       { key:"botany", name:"Botany", color:C.verdigris, max:40,
         gist:"quality of life. mounted gathering at 40 — the first thing a non-druid needs.",
-        milestones:[[10,"unlocks a sub-spec (Mulching / Cultivation)"],[40,"mounted herb gathering · +Finesse, +Deftness along the way"]],
-        per:"Finesse", perRate:0.9,
-        nodes:[
-          {at:1, t:"Botany (root)", d:"+Finesse and +Deftness as you fill the trunk", trunk:true},
-          {at:10, t:"Sub-spec unlocked", d:"opens Mulching and Cultivation branches", trunk:true},
-          {at:40, t:"Mounted Gathering", d:"gather herbs without dismounting — doubles route speed", trunk:true, key:true},
-          {at:20, t:"Mulching · Imbued Mulch", d:"10 Tranquility Bloom → mulch that guarantees a Nocturnal Lotus on your next pick", branch:"Mulching"},
-          {at:30, t:"Mulching · Magical Mulch", d:"guaranteed Finesse proc on next gather", branch:"Mulching"},
-          {at:20, t:"Cultivation · Seeds", d:"plant seeds on river soil for instant herbs", branch:"Cultivation"},
-          {at:30, t:"Cultivation · Empowered Mulch", d:"guaranteed max-rank (Gold) herb on next pick", branch:"Cultivation"},
+        trunk:[
+          {at:1,  t:"Botany root", d:"+Finesse and +Deftness trickle in as you fill the trunk"},
+          {at:10, t:"Sub-spec unlocked", d:"opens the Mulching and Cultivation lines below"},
+          {at:40, t:"Mounted Gathering", d:"gather without dismounting — roughly doubles route speed", key:true},
         ],
-        note:"the 40-point payoff (mounted gathering) is the value; the trickle of Finesse is a bonus, not the reason." },
+        subs:[
+          { name:"Mulching", color:C.sage, nodes:[
+            {at:20, t:"Imbued Mulch", d:"10 Tranquility Bloom → mulch that forces a Nocturnal Lotus on your next pick"},
+            {at:30, t:"Magical Mulch", d:"mulch that guarantees a Finesse proc (bonus herbs) next gather"},
+            {at:40, t:"Empowered Mulch", d:"mulch that guarantees a max-rank Gold herb next gather"},
+          ]},
+          { name:"Cultivation", color:C.lotus, nodes:[
+            {at:20, t:"Seeds", d:"plant seeds on Rich Soil by rivers, harvest herbs on the spot"},
+            {at:30, t:"Infused seeds", d:"planted herbs can roll elemental / higher-rank variants"},
+            {at:40, t:"Overload synergy", d:"cuts Overload cooldown, ties Cultivation into mote farming"},
+          ]},
+        ],
+        note:"the 40-point payoff (mounted gathering) is the whole reason. both subs are minor — Mulching's Lotus mulch is the pick if you go there." },
       { key:"bountiful", name:"Bountiful Harvests", color:C.ochreDeep, max:40,
-        gist:"pure yield. +1 minimum and +1 maximum herb per node at 40, plus skill for gold-quality.",
-        milestones:[[20,"per-herb sub-spec: ~15–20% Finesse proc for bonus herbs"],[40,"+1 min & +1 max yield per gather · extra skill on all herbs"]],
-        per:"yield", perRate:0.025,
-        nodes:[
-          {at:1, t:"Bountiful (root)", d:"+yield and +herb skill (more Gold-quality) as you fill it", trunk:true},
-          {at:40, t:"+1 Min & +1 Max Yield", d:"every node gives at least one more herb, often two", trunk:true, key:true},
-          {at:20, t:"Tranquility Bloom focus", d:"~15-20% Finesse proc + skill for this herb · +Lotus rate at 40", branch:"per-herb"},
-          {at:20, t:"Sanguithorn focus", d:"~15-20% Finesse proc + skill for this herb", branch:"per-herb"},
-          {at:20, t:"Mana Lily focus", d:"~15-20% Finesse proc + skill for this herb", branch:"per-herb"},
-          {at:20, t:"Argentleaf focus", d:"~15-20% Finesse proc + skill for this herb", branch:"per-herb"},
+        gist:"pure yield. +1 min & +1 max herb at 40, plus skill for more Gold-quality.",
+        trunk:[
+          {at:1,  t:"Bountiful root", d:"+yield and +herb skill (more Gold quality) as you fill it"},
+          {at:10, t:"Sub-spec unlocked", d:"opens per-herb focus lines below"},
+          {at:40, t:"+1 Min & +1 Max Yield", d:"every node gives at least one more herb, often two", key:true},
         ],
-        note:"the strongest gold tree once you can gather mounted. target the herb selling highest on your realm." },
+        subs:[
+          { name:"Per-herb focus", color:C.ochre, nodes:[
+            {at:20, t:"Tranquility / Sanguithorn / Mana Lily / Argentleaf", d:"pick one: ~15-20% Finesse proc for bonus herbs + skill for that herb"},
+            {at:40, t:"Maxed herb focus", d:"at 40 in one herb, raises that herb's Nocturnal Lotus drop rate"},
+          ]},
+        ],
+        note:"strongest gold tree once you can gather mounted. focus the herb selling highest on Moon Guard." },
       { key:"overload", name:"Midnight Overload", color:C.plum, max:40,
-        gist:"infused-node farming. a second Overload charge at 40. only matters if you chase elemental nodes.",
-        milestones:[[1,"root: passive Overload cooldown reduction (free)"],[40,"second Overload charge · Lightfused & Voidbound double their motes"]],
-        per:"motes", perRate:0.6,
-        nodes:[
-          {at:1, t:"Overload (root)", d:"passive Overload cooldown reduction — free to grab", trunk:true},
-          {at:40, t:"Second Overload Charge", d:"double-dip infused nodes for twice the motes", trunk:true, key:true},
-          {at:15, t:"Voidbound", d:"more Mote of Pure Void from Voidstorm nodes", branch:"elemental"},
-          {at:15, t:"Wild", d:"more Mote of Wild Magic from Zul'Aman nodes", branch:"elemental"},
-          {at:15, t:"Lightfused", d:"more Mote of Light from Eversong nodes", branch:"elemental"},
-          {at:15, t:"Primal", d:"more Mote of Primal Energy from Harandar nodes", branch:"elemental"},
+        gist:"infused-node farming. a second Overload charge at 40. only if you chase elemental nodes.",
+        trunk:[
+          {at:1,  t:"Overload root", d:"passive Overload cooldown reduction — free to grab"},
+          {at:40, t:"Second Overload Charge", d:"double-dip infused nodes for twice the motes", key:true},
         ],
-        note:"heavy point cost for a benefit that only applies to rare infused nodes — last priority for most." },
+        subs:[
+          { name:"By element", color:C.ink2, nodes:[
+            {at:15, t:"Voidbound (Voidstorm)", d:"more Mote of Pure Void · also grants a portal back out of deep nodes"},
+            {at:15, t:"Wild (Zul'Aman)", d:"more Mote of Wild Magic — the Inscription treatise mote"},
+            {at:15, t:"Lightfused (Eversong)", d:"more Mote of Light from light-infused nodes"},
+            {at:15, t:"Primal (Harandar)", d:"more Mote of Primal Energy from primal nodes"},
+          ]},
+        ],
+        note:"heavy cost for a benefit only on rare infused nodes. take Voidbound first for the safety portal. last priority for most." },
     ],
   },
   alch: {
     label:"Alchemy", accent:C.ochreDeep, cap:90,
     branches:[
-      { key:"flasks", name:"Fluent in Flasks", color:C.sanguine, max:50,
-        gist:"the flask tree. the base Thalassian flask is taught here; crafting it 10× reveals the other three.",
-        milestones:[[1,"learn Flask of Thalassian Resistance (the base flask)"],[30,"Cauldron of Sin'dorei Flasks (raid cauldron · warbound)"],[50,"full flask mastery · best Multicraft on flasks"]],
-        per:"Multicraft", perRate:0.5,
-        nodes:[
-          {at:1, t:"Flask of Thalassian Resistance", d:"the base flask · craft it 10× to reveal the other three", trunk:true},
-          {at:5, t:"Personal flask duration ×2", d:"your own flasks last twice as long", trunk:true},
-          {at:15, t:"Party/raid flask duration ×2", d:"doubles flask duration for the whole group — huge raid value", trunk:true, key:true},
-          {at:30, t:"Cauldron of Sin'dorei Flasks", d:"one craft, flasks for the whole raid (warbound)", trunk:true},
-          {at:50, t:"Full flask mastery", d:"best Multicraft on flasks — most free extra flasks", trunk:true, key:true},
-          {at:20, t:"Recycle · Resourcefulness", d:"cuts flask & phial material cost", branch:"thrift"},
+      { key:"flasks", name:"Fluent in Flasks", color:C.sanguine, max:30,
+        gist:"flasks & phials. the personal/raid flask duration perks live here, very early.",
+        trunk:[
+          {at:1,  t:"Fluent root", d:"learn the base Thalassian flask; +flask & phial skill"},
+          {at:5,  t:"Personal flask duration ×2", d:"your own flasks last twice as long"},
+          {at:15, t:"Party/raid flask duration ×2", d:"doubles flask duration for the whole group — unlocked early, huge raid value", key:true},
+          {at:30, t:"Cauldron of Sin'dorei Flasks", d:"one craft, flasks for the whole raid (warbound, not sellable)"},
         ],
-        note:"flasks are the flagship sellers. 30 KP here unlocks the cauldron, though the cauldron itself is bound." },
-      { key:"potions", name:"Potion Prowess", color:C.ink2, max:50,
-        gist:"the potion tree. Light and Void potions, the bulk-volume sellers.",
-        milestones:[[1,"improved potion yields"],[30,"Voidlight Potion Cauldron (bound utility)"],[50,"full potion mastery · best Multicraft on potions"]],
-        per:"Multicraft", perRate:0.5,
-        nodes:[
-          {at:1, t:"Potion yields up", d:"more potions per craft from the start", trunk:true},
-          {at:15, t:"Prolific Potioneer", d:"Multicraft nodes begin — free extra potions", trunk:true},
-          {at:30, t:"Voidlight Potion Cauldron", d:"group potion cauldron (bound utility)", trunk:true},
-          {at:50, t:"Full potion mastery", d:"best Multicraft on potions — bulk seller's dream", trunk:true, key:true},
-          {at:20, t:"Light potion sub-spec", d:"extra yield & quality on Light's Potential and kin", branch:"split"},
-          {at:20, t:"Void potion sub-spec", d:"extra yield & quality on Void potions", branch:"split"},
+        subs:[
+          { name:"Sin'dorei Specialist (Thalassian)", color:C.ochreDeep, nodes:[
+            {at:10, t:"Flask Abundance", d:"the gold-making node: multiplies Multicraft on Thalassian flasks — free extra flasks"},
+            {at:30, t:"Concentration & skill", d:"big Ingenuity + reduced Concentration use → natural Gold-rank flasks"},
+          ]},
+          { name:"Haranir Secrets (Phials)", color:C.verdigris, nodes:[
+            {at:10, t:"Phial Abundance", d:"Multicraft on Haranir profession phials — free extra phials"},
+            {at:30, t:"Phial mastery", d:"skill & Concentration savings for Gold-rank phials"},
+          ]},
         ],
-        note:"Light's Potential is the steady bulk earner. potions carry the day-to-day coin between flask rushes." },
-      { key:"transmute", name:"Transmutation Authority", color:C.verdigris, max:40,
-        gist:"transmutes & reagents. turns motes into more motes, feeds cauldrons and other crafters.",
-        milestones:[[1,"mote transmutes (18h shared cooldown)"],[40,"Wondrous Synergist & cross-profession reagents · best Multicraft on transmutes"]],
-        per:"Multicraft", perRate:0.4,
-        nodes:[
-          {at:1, t:"Mote transmutes", d:"convert 10 of one mote into 8 of another (18h shared CD)", trunk:true},
-          {at:30, t:"Magister's Alchemist Stone", d:"epic embellishment that boosts your potion effects", trunk:true},
-          {at:40, t:"Wondrous Synergist + Multicraft", d:"daily reagent for other crafters · free extra motes on transmute", trunk:true, key:true},
+        note:"go to 15 first in every build — the raid duration perk is the best early value in the whole profession. Flask Abundance is the seller's node." },
+      { key:"potions", name:"Potion Prowess", color:C.ink2, max:30,
+        gist:"potions, split into Light and Void lines. the bulk-volume sellers.",
+        trunk:[
+          {at:1,  t:"Prowess root", d:"+potions per craft; +potion skill"},
+          {at:10, t:"Sub-spec unlocked", d:"unlocks Light's Potential (Light) and Void-Shrouded Tincture (Void)"},
+          {at:20, t:"More recipes + yield", d:"opens the deeper potion recipes and raises yield"},
+          {at:30, t:"Voidlight Potion Cauldron", d:"group potion cauldron (bound utility)", key:true},
         ],
-        note:"Multicraft here means free extra motes on transmute. value depends on mote prices — watch the market." },
+        subs:[
+          { name:"Path of Light", color:C.ochre, nodes:[
+            {at:10, t:"Prolific Potioneer · Light", d:"unlock the Light Multicraft node"},
+            {at:30, t:"Maxed Light", d:"fill for max Multicraft + quality on Light's Potential and kin"},
+          ]},
+          { name:"Path of Void", color:C.plum, nodes:[
+            {at:10, t:"Prolific Potioneer · Void", d:"unlock the Void Multicraft node"},
+            {at:30, t:"Maxed Void", d:"max Multicraft + quality on Void potions (higher risk/reward brews)"},
+          ]},
+        ],
+        note:"Light's Potential is the steady bulk earner — go Path of Light for AH volume. Prolific Potioneer is the node that actually prints gold." },
+      { key:"transmute", name:"Transmutation Authority", color:C.verdigris, max:30,
+        gist:"transmutes & reagents. mote cycling and the Wondrous Synergist daily.",
+        trunk:[
+          {at:1,  t:"Authority root", d:"learn mote transmutes: 10 of one mote → 8 of another (18h shared CD, can Multicraft)"},
+          {at:5,  t:"Sub-spec unlocked", d:"early — opens Synthesis Synergy"},
+          {at:30, t:"Magister's Alchemist Stone", d:"epic embellishment trinket that boosts your potion effects", key:true},
+        ],
+        subs:[
+          { name:"Synthesis Synergy", color:C.ochreDeep, nodes:[
+            {at:5,  t:"Wondrous Synergist", d:"daily-cooldown transmute reagent used in cauldrons & housing decor"},
+            {at:20, t:"Transmute Multicraft", d:"free extra motes / reagents on transmute crafts"},
+          ]},
+        ],
+        note:"niche. worth it for dedicated transmuters or the Magister's Stone. Synergist's value swings with the housing-decor market — watch it." },
+      { key:"mastery", name:"Alchemical Mastery", color:C.plum, max:30,
+        gist:"the efficiency tree. Resourcefulness (cheaper crafts) + skill that applies to everything.",
+        trunk:[
+          {at:1,  t:"Mastery root", d:"flat Alchemy skill that applies to every craft — helps reach Gold rank"},
+          {at:10, t:"Sub-spec unlocked", d:"opens the three Resourcefulness lines below"},
+        ],
+        subs:[
+          { name:"Recycle", color:C.sanguine, nodes:[
+            {at:20, t:"Resourcefulness · flasks & phials", d:"chance to use fewer mats on flasks/phials → pure margin"},
+          ]},
+          { name:"Reuse", color:C.ink2, nodes:[
+            {at:20, t:"Resourcefulness · potions", d:"chance to use fewer mats on potions → pure margin"},
+          ]},
+          { name:"Reduce", color:C.verdigris, nodes:[
+            {at:20, t:"Resourcefulness · reagents", d:"chance to use fewer mats on transmutes & other crafts"},
+          ]},
+        ],
+        note:"unlocks no recipes, only stats — but 10-20 points here is free money once your main tree is set. match the line to whatever you craft most." },
     ],
   },
 };
@@ -737,20 +785,17 @@ function Overview({ price, loading, live, go }){
 
     <div style={{display:"flex", justifyContent:"space-between", alignItems:"baseline"}}>
       <Eyebrow>worth the making · top 10</Eyebrow>
-      <span style={{fontFamily:DISPLAY, fontSize:10, fontStyle:"italic", color:C.inkFaint}}>profit when YOU gathered the herbs</span>
+      <span style={{fontFamily:DISPLAY, fontSize:10, fontStyle:"italic", color:C.inkFaint}}>what they sell for</span>
     </div>
     <div style={{margin:"7px 0 14px"}}>
       {craft.map((r,i)=>(
         <div key={r.id} onClick={()=>go("worth")} style={{display:"flex", gap:11, alignItems:"center", padding:"6px 0", borderBottom:"1px solid "+C.ruleSoft, cursor:"pointer"}}>
           <span style={{fontFamily:DISPLAY, fontSize:16, fontStyle:"italic", color:i===0?C.sanguine:C.rule, minWidth:18}}>{i+1}</span>
           <Vial kind={r.item.kind} color={C.ochre} size={24}/>
-          <div style={{flex:1, minWidth:0}}>
-            <div style={{fontFamily:DISPLAY, fontSize:14.5, color:C.ink, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis"}}>{r.item.name}</div>
-            <div style={{fontFamily:DISPLAY, fontSize:10.5, fontStyle:"italic", color:C.inkFaint, display:"flex", gap:10, alignItems:"center"}}>{loading?"":<>{r.saleGold!=null&&<span><QGold size={12}/> {fmtG(r.saleGold)}g</span>}<span><QSilver size={11}/> {r.saleSilver==null?"—":fmtG(r.saleSilver)+"g"}</span></>}</div>
-          </div>
-          <div style={{textAlign:"right", flexShrink:0}}>
-            <div style={{fontFamily:DISPLAY, fontSize:16, color:r.marginGathered>0?C.ochreDeep:C.sanguine}}>{loading?"…":fmtG(r.marginGathered)}<span style={{fontSize:10, fontStyle:"italic"}}> g</span></div>
-            <div style={{fontFamily:DISPLAY, fontSize:9, textTransform:"uppercase", letterSpacing:.5, color:C.inkFaint}}>gathered</div>
+          <span style={{flex:1, fontFamily:DISPLAY, fontSize:14.5, color:C.ink, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis"}}>{r.item.name}</span>
+          <div style={{display:"flex", gap:12, alignItems:"center", flexShrink:0}}>
+            <span style={{display:"inline-flex", alignItems:"center", gap:4, fontFamily:DISPLAY, fontSize:14}}><QGold size={12}/> <span style={{color:C.ochreDeep}}>{loading?"…":(r.saleGold==null?<span style={{fontSize:10, fontStyle:"italic", color:C.inkFaint}}>—</span>:fmtG(r.saleGold)+"g")}</span></span>
+            <span style={{display:"inline-flex", alignItems:"center", gap:4, fontFamily:DISPLAY, fontSize:14}}><QSilver size={11}/> <span style={{color:C.ink2}}>{loading?"…":(r.saleSilver==null?"—":fmtG(r.saleSilver)+"g")}</span></span>
           </div>
         </div>
       ))}
@@ -1068,6 +1113,49 @@ function Field({ label, children }){
 }
 const numIn={ width:70, background:"transparent", border:"none", borderBottom:"1px solid "+C.rule, color:C.ink, fontFamily:DISPLAY, fontSize:17, padding:"2px 0" };
 
+/* ── loose hand-drawn terrain behind each zone's route ── */
+function ZoneArt({ kind, color }){
+  // deterministic scatter so it doesn't reflow on every render
+  const rnd=(seed)=>{const x=Math.sin(seed*999.7)*43758.5; return x-Math.floor(x);};
+  if(kind==="woods"){
+    // rolling tree canopy + soft hills, an easy wooded vale
+    return <g opacity="0.5">
+      <path d="M0 64 Q25 56 50 62 T100 60 L100 90 L0 90 Z" fill={color} opacity="0.10"/>
+      <path d="M0 72 Q30 66 60 71 T100 70 L100 90 L0 90 Z" fill={color} opacity="0.10"/>
+      {Array.from({length:13}).map((_,i)=>{const x=6+i*7.2+rnd(i)*3, y=20+rnd(i+9)*46, s=3+rnd(i+3)*3;
+        return <g key={i}><line x1={x} y1={y} x2={x} y2={y+s*1.4} stroke={color} strokeWidth="0.5" opacity="0.55"/>
+          <ellipse cx={x} cy={y} rx={s} ry={s*1.2} fill={color} opacity="0.16"/></g>;})}
+    </g>;
+  }
+  if(kind==="ruins"){
+    // toppled troll columns & a stepped pyramid silhouette
+    return <g opacity="0.5">
+      <path d="M30 70 L42 30 L54 70 Z" fill={color} opacity="0.10"/>
+      <path d="M38 70 L50 40 L62 70 Z" fill={color} opacity="0.10"/>
+      {[[12,46],[20,60],[68,34],[80,56],[58,64],[88,44]].map(([x,y],i)=>(
+        <g key={i}><rect x={x} y={y} width="3.2" height={10+rnd(i)*9} rx="0.6" fill={color} opacity="0.22" transform={`rotate(${(rnd(i+5)-0.5)*30} ${x+1.6} ${y})`}/></g>))}
+      {Array.from({length:7}).map((_,i)=>{const x=10+i*12, y=78;
+        return <rect key={i} x={x} y={y} width="6" height="3" fill={color} opacity="0.14"/>;})}
+    </g>;
+  }
+  if(kind==="thicket"){
+    // tall vertical mushroom stalks & roots — a steep, crowded climb
+    return <g opacity="0.5">
+      {Array.from({length:9}).map((_,i)=>{const x=8+i*10+rnd(i)*4, h=18+rnd(i+2)*34, cap=2.5+rnd(i)*2.5;
+        return <g key={i}><line x1={x} y1={80} x2={x} y2={80-h} stroke={color} strokeWidth="1" opacity="0.4"/>
+          <ellipse cx={x} cy={80-h} rx={cap} ry={cap*0.6} fill={color} opacity="0.2"/></g>;})}
+      <path d="M0 80 Q20 70 35 78 T70 76 T100 80" fill="none" stroke={color} strokeWidth="0.6" opacity="0.4"/>
+    </g>;
+  }
+  // void — broken islands, rifts, a fractured maze
+  return <g opacity="0.55">
+    {[[18,34,10],[44,26,13],[68,30,11],[80,50,9],[40,60,12],[60,66,8]].map(([x,y,s],i)=>(
+      <path key={i} d={`M${x-s} ${y} L${x-s*0.3} ${y-s*0.5} L${x+s*0.6} ${y-s*0.3} L${x+s} ${y+s*0.4} L${x} ${y+s*0.7} L${x-s*0.7} ${y+s*0.3} Z`} fill={color} opacity="0.13"/>))}
+    {Array.from({length:6}).map((_,i)=>{const x1=10+rnd(i)*80, y1=15+rnd(i+1)*60;
+      return <line key={i} x1={x1} y1={y1} x2={x1+(rnd(i+4)-0.5)*30} y2={y1+(rnd(i+7)-0.5)*30} stroke={color} strokeWidth="0.4" opacity="0.45" strokeDasharray="1 1.5"/>;})}
+  </g>;
+}
+
 /* ── MAPS (tool · the four grounds + npc waypoints) ── */
 function MapsPage(){
   const [a,setA]=useState(0);
@@ -1080,11 +1168,18 @@ function MapsPage(){
     <div style={{display:"flex", gap:4, flexWrap:"wrap", margin:"8px 0 12px"}}>
       {ZONES.map((zo,i)=><button key={i} onClick={()=>setA(i)} style={{background:a===i?zo.color:"transparent", color:a===i?C.paper:C.inkSoft, border:"1px solid "+(a===i?zo.color:C.rule), padding:"4px 11px", cursor:"pointer", fontFamily:DISPLAY, fontStyle:"italic", fontSize:12}}>{zo.name}</button>)}
     </div>
-    <div style={{position:"relative", border:"1px solid "+C.rule, background:C.paperDeep, padding:8, marginBottom:10}}>
+    <div style={{position:"relative", border:"1px solid "+C.rule, background:"radial-gradient(120% 100% at 50% 30%, "+C.paper+", "+C.paperDeep+")", padding:8, marginBottom:10}}>
       <svg viewBox="0 0 100 90" style={{width:"100%", display:"block"}}>
-        <path d={pathD+" Z"} fill="none" stroke={z.color} strokeWidth="0.5" strokeOpacity="0.45" strokeDasharray="2 2.5"/>
-        {z.nodes.map((nd,i)=><circle key={i} cx={nd[0]} cy={nd[1]} r="2.2" fill={z.color} opacity="0.85"/>)}
-        <circle cx={z.nodes[0][0]} cy={z.nodes[0][1]} r="3" fill="none" stroke={C.sanguine} strokeWidth="0.9"/>
+        {/* loose terrain illustration for this ground */}
+        <ZoneArt kind={z.terrain} color={z.color}/>
+        {/* rivers, where the zone has them */}
+        {z.river&&z.river.length>0 && <path d={"M "+z.river.map(r=>r[0]+" "+r[1]).join(" L ")} fill="none" stroke={C.ink2} strokeWidth="1.4" strokeOpacity="0.3" strokeLinecap="round"/>}
+        {/* the gathering loop */}
+        <path d={pathD+" Z"} fill="none" stroke={z.color} strokeWidth="0.6" strokeOpacity="0.55" strokeDasharray="2 2.5"/>
+        {z.nodes.map((nd,i)=><circle key={i} cx={nd[0]} cy={nd[1]} r="2.2" fill={z.color} opacity="0.9"/>)}
+        {/* start marker */}
+        <circle cx={z.nodes[0][0]} cy={z.nodes[0][1]} r="3.4" fill="none" stroke={C.sanguine} strokeWidth="1"/>
+        <text x={z.nodes[0][0]} y={z.nodes[0][1]-4.5} fill={C.sanguine} fontSize="4" textAnchor="middle" fontStyle="italic" fontFamily="Georgia,serif">start</text>
       </svg>
     </div>
     <div style={{display:"flex", gap:8, marginBottom:6}}><Tag small>{z.mote}</Tag><Tag small color={z.color}>{z.difficulty}</Tag></div>
@@ -1109,15 +1204,9 @@ function SpecPlanner({ build, setBuild }){
   const set=(brk,val,max)=>{
     const v=Math.max(0,Math.min(max,val));
     const others=T.branches.reduce((s,br)=>s+(br.key===brk?0:(b[br.key]||0)),0);
-    const capped=Math.min(v, T.cap-others); // can't exceed the KP cap
+    const capped=Math.min(v, T.cap-others);
     setBuild(p=>({...p,[tree]:{...p[tree],[brk]:capped}}));
   };
-  // a simple "what you're getting" index per branch, for the graph
-  const bars=T.branches.map(br=>{
-    const pts=b[br.key]||0;
-    return { name:br.name, color:br.color, pts, max:br.max, per:br.per, value:+(pts*br.perRate).toFixed(1) };
-  });
-  const maxVal=Math.max(1,...bars.map(x=>x.value));
   return <div style={pad}>
     <div style={{display:"flex", justifyContent:"space-between", alignItems:"baseline", marginBottom:8}}>
       <Eyebrow>the planner · spend your knowing</Eyebrow>
@@ -1130,54 +1219,39 @@ function SpecPlanner({ build, setBuild }){
     </div>
 
     {/* points budget */}
-    <div style={{display:"flex", alignItems:"baseline", gap:8, marginBottom:12}}>
+    <div style={{display:"flex", alignItems:"baseline", gap:8, marginBottom:6}}>
       <span style={{fontFamily:DISPLAY, fontSize:28, color:left<0?C.sanguine:T.accent}}>{spent}</span>
       <span style={{fontFamily:DISPLAY, fontSize:13, fontStyle:"italic", color:C.inkFaint}}>of {T.cap} knowledge spent · {left} left</span>
     </div>
-
-    {/* live graph */}
-    <div style={{border:"1px solid "+C.rule, background:"rgba(255,255,255,0.15)", padding:"12px 12px 8px", marginBottom:14}}>
-      <div style={{fontFamily:DISPLAY, fontSize:10.5, letterSpacing:1, textTransform:"uppercase", color:C.inkFaint, marginBottom:8}}>what you're getting</div>
-      {bars.map((bar,i)=>(
-        <div key={i} style={{marginBottom:9}}>
-          <div style={{display:"flex", justifyContent:"space-between", fontFamily:DISPLAY, fontSize:11.5, color:C.inkSoft, marginBottom:2}}>
-            <span>{bar.name}</span><span style={{color:bar.color}}>{bar.value} {bar.per}{bar.pts>0?" · "+bar.pts+"pt":""}</span>
-          </div>
-          <div style={{height:9, background:C.paperDeep, borderRadius:1, overflow:"hidden"}}>
-            <div style={{height:"100%", width:(bar.value/maxVal*100)+"%", background:bar.color, transition:"width 0.25s"}}/>
-          </div>
-        </div>
-      ))}
-      <div style={{fontFamily:DISPLAY, fontSize:10, fontStyle:"italic", color:C.inkFaint, marginTop:4}}>relative payoff index — milestones are exact, per-point rates are estimates</div>
+    <div style={{fontFamily:DISPLAY, fontSize:10.5, fontStyle:"italic", color:C.inkFaint, marginBottom:14}}>
+      filled diamonds are the big payoffs. each branch shows its trunk and the sub-specs that split off it, with what unlocks at every point level.
     </div>
 
-    {/* ── the visual trees: each branch a connected trunk with sub-branches ── */}
+    {/* ── the trees ── */}
     <div style={{overflowY:"auto"}}>
       {T.branches.map(br=>{
         const pts=b[br.key]||0;
-        const trunk=(br.nodes||[]).filter(n=>n.trunk).sort((a,c)=>a.at-c.at);
-        const subs={};
-        (br.nodes||[]).filter(n=>!n.trunk).forEach(n=>{ (subs[n.branch]=subs[n.branch]||[]).push(n); });
-        return <div key={br.key} style={{padding:"4px 0 16px", borderBottom:"1px solid "+C.ruleSoft, marginBottom:8}}>
+        const trunk=(br.trunk||[]).slice().sort((a,c)=>a.at-c.at);
+        const pct=Math.min(100,(pts/br.max)*100);
+        return <div key={br.key} style={{padding:"4px 0 18px", borderBottom:"1px solid "+C.rule, marginBottom:10}}>
           {/* branch header + stepper */}
-          <div style={{display:"flex", alignItems:"center", gap:10, marginBottom:10}}>
-            <span style={{width:11, height:11, borderRadius:2, background:br.color, flexShrink:0}}/>
+          <div style={{display:"flex", alignItems:"center", gap:10, marginBottom:12}}>
+            <span style={{width:12, height:12, borderRadius:3, transform:"rotate(45deg)", background:br.color, flexShrink:0}}/>
             <div style={{flex:1}}>
-              <div style={{fontFamily:DISPLAY, fontSize:16, color:C.ink}}>{br.name}</div>
+              <div style={{fontFamily:DISPLAY, fontSize:16.5, color:C.ink}}>{br.name}</div>
               <div style={{fontFamily:DISPLAY, fontSize:11, fontStyle:"italic", color:C.inkFaint}}>{br.gist}</div>
             </div>
             <div style={{display:"flex", alignItems:"center", gap:8, flexShrink:0}}>
               <button onClick={()=>set(br.key,pts-5,br.max)} style={stepBtn}>–</button>
-              <span style={{fontFamily:DISPLAY, fontSize:16, color:C.ink, minWidth:46, textAlign:"center"}}>{pts}<span style={{fontSize:11, color:C.inkFaint}}>/{br.max}</span></span>
+              <span style={{fontFamily:DISPLAY, fontSize:16, color:C.ink, minWidth:48, textAlign:"center"}}>{pts}<span style={{fontSize:11, color:C.inkFaint}}>/{br.max}</span></span>
               <button onClick={()=>set(br.key,pts+5,br.max)} style={stepBtn}>+</button>
             </div>
           </div>
 
-          {/* TRUNK: vertical line of key nodes */}
+          {/* TRUNK */}
           <div style={{position:"relative", paddingLeft:30}}>
-            {/* the connecting spine */}
-            <div style={{position:"absolute", left:13, top:10, bottom:10, width:2, background:C.ruleSoft}}/>
-            <div style={{position:"absolute", left:13, top:10, width:2, background:br.color, height:`calc(${Math.min(100,(pts/br.max)*100)}% - 0px)`, transition:"height .3s", maxHeight:"calc(100% - 20px)"}}/>
+            <div style={{position:"absolute", left:13, top:12, bottom:12, width:2, background:C.ruleSoft}}/>
+            <div style={{position:"absolute", left:13, top:12, width:2, background:br.color, height:`calc(${pct}% - 24px)`, minHeight:0, transition:"height .3s"}}/>
             {trunk.map((n,i)=>{const hit=pts>=n.at;
               return <div key={i} style={{position:"relative", display:"flex", gap:11, alignItems:"flex-start", padding:"6px 0"}}>
                 <span style={{position:"absolute", left:-23, top:7, width:n.key?17:13, height:n.key?17:13,
@@ -1185,37 +1259,43 @@ function SpecPlanner({ build, setBuild }){
                   border:"2px solid "+(hit?br.color:C.rule), background:hit?br.color:C.paper,
                   boxShadow:hit&&n.key?"0 0 8px "+br.color:"none", flexShrink:0, transition:"all .2s"}}/>
                 <span style={{fontFamily:DISPLAY, fontSize:12, fontWeight:700, color:hit?br.color:C.inkFaint, minWidth:22}}>{n.at}</span>
-                <div style={{flex:1, opacity:hit?1:0.62}}>
-                  <div style={{fontFamily:DISPLAY, fontSize:13.5, color:C.ink, fontStyle:n.key?"normal":"normal", fontWeight:n.key?700:400}}>{n.t}</div>
+                <div style={{flex:1, opacity:hit?1:0.6}}>
+                  <div style={{fontFamily:DISPLAY, fontSize:13.5, color:C.ink, fontWeight:n.key?700:400}}>{n.t}</div>
                   <div style={{fontFamily:DISPLAY, fontSize:11.5, fontStyle:"italic", color:C.inkSoft, lineHeight:1.4}}>{n.d}</div>
                 </div>
               </div>;
             })}
           </div>
 
-          {/* SUB-BRANCHES: each splits off with its own little line */}
-          {Object.keys(subs).map(sb=>(
-            <div key={sb} style={{marginTop:8, marginLeft:30, paddingLeft:14, borderLeft:"2px dashed "+C.ruleSoft}}>
-              <div style={{fontFamily:DISPLAY, fontSize:10.5, letterSpacing:1, textTransform:"uppercase", color:C.inkFaint, marginBottom:4}}>{sb}</div>
-              <div style={{display:"flex", flexWrap:"wrap", gap:"4px 14px"}}>
-                {subs[sb].map((n,i)=>{const hit=pts>=n.at;
-                  return <div key={i} style={{display:"flex", gap:7, alignItems:"flex-start", opacity:hit?1:0.6, flex:"1 1 44%", minWidth:140, padding:"3px 0"}}>
-                    <span style={{width:10, height:10, borderRadius:"50%", border:"1.5px solid "+(hit?br.color:C.rule), background:hit?br.color:"transparent", flexShrink:0, marginTop:4}}/>
-                    <div>
-                      <div style={{fontFamily:DISPLAY, fontSize:12.5, color:C.ink}}><b style={{color:hit?br.color:C.inkFaint}}>{n.at}</b> · {n.t}</div>
-                      <div style={{fontFamily:DISPLAY, fontSize:11, fontStyle:"italic", color:C.inkSoft, lineHeight:1.35}}>{n.d}</div>
-                    </div>
-                  </div>;
-                })}
+          {/* SUB-SPECS: each its own connected line, nodes by level */}
+          {(br.subs||[]).map((sb,si)=>(
+            <div key={si} style={{marginTop:10, marginLeft:30, position:"relative", paddingLeft:20}}>
+              {/* the elbow connector into this sub-spec */}
+              <div style={{position:"absolute", left:0, top:0, bottom:14, width:2, borderLeft:"2px dashed "+(sb.color||br.color), opacity:0.5}}/>
+              <div style={{display:"flex", alignItems:"center", gap:7, marginBottom:4}}>
+                <span style={{width:8, height:8, borderRadius:2, transform:"rotate(45deg)", background:sb.color||br.color, flexShrink:0}}/>
+                <span style={{fontFamily:DISPLAY, fontSize:11.5, letterSpacing:1, textTransform:"uppercase", color:sb.color||br.color}}>{sb.name}</span>
               </div>
+              {sb.nodes.map((n,j)=>{const hit=pts>=n.at;
+                return <div key={j} style={{display:"flex", gap:9, alignItems:"flex-start", padding:"3px 0", opacity:hit?1:0.58}}>
+                  <span style={{width:9, height:9, borderRadius:"50%", border:"1.5px solid "+(hit?(sb.color||br.color):C.rule), background:hit?(sb.color||br.color):"transparent", flexShrink:0, marginTop:4}}/>
+                  <span style={{fontFamily:DISPLAY, fontSize:11.5, fontWeight:700, color:hit?(sb.color||br.color):C.inkFaint, minWidth:20}}>{n.at}</span>
+                  <div style={{flex:1}}>
+                    <div style={{fontFamily:DISPLAY, fontSize:12.5, color:C.ink}}>{n.t}</div>
+                    <div style={{fontFamily:DISPLAY, fontSize:11, fontStyle:"italic", color:C.inkSoft, lineHeight:1.35}}>{n.d}</div>
+                  </div>
+                </div>;
+              })}
             </div>
           ))}
 
-          {pts>0 && <div style={{fontFamily:HAND, fontSize:12.5, color:C.greenDk, transform:"rotate(-0.3deg)", marginTop:10, marginLeft:30}}>{br.note}</div>}
+          {pts>0 && <div style={{fontFamily:HAND, fontSize:12.5, color:C.greenDk, transform:"rotate(-0.3deg)", marginTop:12, marginLeft:30}}>{br.note}</div>}
         </div>;
       })}
     </div>
-    <div style={{fontFamily:DISPLAY, fontSize:10.5, fontStyle:"italic", color:C.inkFaint, marginTop:8}}>your build is kept while the journal is open. points step by 5; the cap is the knowledge you'll have deep into the tier.</div>
+    <div style={{fontFamily:DISPLAY, fontSize:10.5, fontStyle:"italic", color:C.inkFaint, marginTop:8}}>
+      point thresholds and what each node unlocks are taken from the Midnight profession guides. exact per-point stat values aren't published, so nodes are described by what they do. your build is kept while the journal is open.
+    </div>
   </div>;
 }
 const stepBtn={ width:28, height:28, borderRadius:"50%", border:"1px solid "+C.rule, background:"rgba(255,255,255,0.3)", color:C.ink, fontFamily:DISPLAY, fontSize:17, cursor:"pointer", lineHeight:1, display:"flex", alignItems:"center", justifyContent:"center" };
