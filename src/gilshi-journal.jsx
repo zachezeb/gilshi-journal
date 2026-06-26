@@ -40,42 +40,50 @@ const HERBS = [
 ];
 const HERB = id => HERBS.find(h=>h.id===id);
 
-// motes & intermediate reagents (transmute products, not gathered herbs)
-const MOTES = [
-  { id:236949, name:"Mote of Light", color:C.ochre },
-  { id:236950, name:"Mote of Primal Energy", color:C.verdigris },
-  { id:236951, name:"Mote of Wild Magic", color:C.sage },
-  { id:236952, name:"Mote of Pure Void", color:C.plum },
+// non-herb crafting reagents that carry a real AH cost: the four motes + the vial.
+// these are priced live alongside herbs so craft margins include them.
+const REAGENTS = [
+  { id:240990, name:"Sunglass Vial",          short:"Vial",  est:3,   color:C.ochre, kind:"vial" },
+  { id:236949, name:"Mote of Light",          short:"Light", est:2,   color:C.ochre, kind:"mote" },
+  { id:236950, name:"Mote of Primal Energy",  short:"Primal",est:6,   color:C.verdigris, kind:"mote" },
+  { id:236951, name:"Mote of Wild Magic",     short:"Wild",  est:5,   color:C.sage, kind:"mote" },
+  { id:236952, name:"Mote of Pure Void",      short:"Void",  est:9,   color:C.plum, kind:"mote" },
 ];
+const REAGENT = id => REAGENTS.find(r=>r.id===id);
+const MOTES = REAGENTS.filter(r=>r.kind==="mote"); // back-compat for any mote-only views
+// resolve any material id (herb or reagent) to {name, est, ...} for cost math
+const MAT = id => HERB(id) || REAGENT(id);
 
 // FULL sellable catalog — the ranking engine scores every tradeable entry here.
 // est/vel are realm estimates (clearly labeled in-app) until live UE data replaces them.
 // ids are real where verified; placeholders resolve to real ids by name when hosted.
 const PRODUCTS = [
-  // ── Flasks (combat · one per secondary stat) ──
-  { id:241326, gid:241327, name:"Flask of the Shattered Sun",   cat:"Flask", kind:"flask", role:"Crit flask · flagship seller",  est:420, vel:9, mats:[{h:236780,q:1},{h:236774,q:8},{h:236776,q:6}], tradeable:true },
-  { id:241322, gid:241323, name:"Flask of the Magisters",       cat:"Flask", kind:"flask", role:"Mastery · default healer flask", est:430, vel:9, mats:[{h:236780,q:1},{h:236770,q:8},{h:236778,q:6}], tradeable:true },
-  { id:241325, gid:241324, name:"Flask of the Blood Knights",   cat:"Flask", kind:"flask", role:"Haste · often top DPS flask",    est:445, vel:8, mats:[{h:236780,q:1},{h:236770,q:6},{h:236776,q:8}], tradeable:true },
-  { id:241320, gid:241321, name:"Flask of Thalassian Resistance",cat:"Flask",kind:"flask", role:"Vers · the base flask",          est:300, vel:5, mats:[{h:236780,q:1},{h:236774,q:8},{h:236776,q:6}], tradeable:true },
-  // ── Phials (profession stats) ──
-  { id:241311, name:"Haranir Phial of Finesse",     cat:"Phial", kind:"vial",  role:"gathering · sells to farmers",   est:75,  vel:5, mats:[{h:236774,q:3},{h:236778,q:2}], tradeable:true },
-  { id:241312, name:"Haranir Phial of Ingenuity",   cat:"Phial", kind:"vial",  role:"crafting · sells to crafters",   est:80,  vel:5, mats:[{h:236774,q:3},{h:236778,q:2}], tradeable:true },
-  { id:241317, name:"Haranir Phial of Perception",  cat:"Phial", kind:"vial",  role:"gathering · rare-find buff",     est:85,  vel:4, mats:[{h:236774,q:3},{h:236778,q:2}], tradeable:true },
-  // ── Light potions ──
-  { id:241309, name:"Light's Potential",            cat:"Light Potion", kind:"potion", role:"safe stat potion · bulk seller", est:55, vel:10, mats:[{h:236761,q:8},{h:236774,q:3},{h:236776,q:3}], tradeable:true },
-  { id:241296, gid:241297, name:"Potion of Zealotry",           cat:"Light Potion", kind:"potion", role:"Light combat variant",     est:48, vel:6, mats:[{h:236761,q:6},{h:236774,q:3}], tradeable:true },
-  { id:241300, gid:241301, name:"Lightfused Mana Potion",       cat:"Light Potion", kind:"potion", role:"healer mana potion",       est:42, vel:8, mats:[{h:236761,q:8},{h:236778,q:3}], tradeable:true },
-  { id:241305, gid:241304, name:"Silvermoon Health Potion",     cat:"Light Potion", kind:"potion", role:"health · off combat CD",   est:30, vel:9, mats:[{h:236761,q:6}], tradeable:true },
-  { id:237055, name:"Refreshing Serum",             cat:"Light Potion", kind:"potion", role:"early utility · Stone mat", est:25, vel:4, mats:[{h:236761,q:8},{h:236770,q:3}], tradeable:true },
-  // ── Void potions ──
-  { id:241292, name:"Draught of Rampant Abandon",   cat:"Void Potion", kind:"potion", role:"more stats · puddle silences", est:70, vel:6, mats:[{h:236780,q:1},{h:236770,q:2}], tradeable:true },
-  { id:241295, name:"Potion of Devoured Dreams",    cat:"Void Potion", kind:"potion", role:"void utility · risk/reward",   est:60, vel:4, mats:[{h:236770,q:3},{h:236778,q:2}], tradeable:true },
-  { id:268954, gid:268955, name:"Entropic Extract",             cat:"Void Potion", kind:"potion", role:"early void leveling potion",   est:22, vel:3, mats:[{h:236761,q:3}], tradeable:true },
+  // ── Flasks (combat · one per secondary stat) ── mats ESTIMATED (wiki blocks recipe scrape)
+  { id:241326, gid:241327, name:"Flask of the Shattered Sun",   cat:"Flask", kind:"flask", role:"Crit flask · flagship seller",  est:420, vel:9, v:false, mats:[{h:236780,q:1},{h:236774,q:8},{h:236776,q:6},{r:240990,q:2}], tradeable:true },
+  { id:241322, gid:241323, name:"Flask of the Magisters",       cat:"Flask", kind:"flask", role:"Mastery · default healer flask", est:430, vel:9, v:false, mats:[{h:236780,q:1},{h:236770,q:8},{h:236778,q:6},{r:240990,q:2}], tradeable:true },
+  { id:241325, gid:241324, name:"Flask of the Blood Knights",   cat:"Flask", kind:"flask", role:"Haste · often top DPS flask",    est:445, vel:8, v:false, mats:[{h:236780,q:1},{h:236770,q:6},{h:236776,q:8},{r:240990,q:2}], tradeable:true },
+  { id:241320, gid:241321, name:"Flask of Thalassian Resistance",cat:"Flask",kind:"flask", role:"Vers · the base flask",          est:300, vel:5, v:false, mats:[{h:236774,q:8},{h:236776,q:6},{r:240990,q:2}], tradeable:true },
+  { id:241332, name:"Vicious Thalassian Flask of Honor",         cat:"Flask", kind:"flask", role:"PvP · honor gains · Honor-bought recipe", est:120, vel:3, v:true, mats:[{h:236761,q:6},{h:236770,q:8},{h:236774,q:6},{r:240990,q:2}], tradeable:true },
+  // ── Phials (profession stats) ── mats ESTIMATED
+  { id:241311, name:"Haranir Phial of Finesse",     cat:"Phial", kind:"vial",  role:"gathering · sells to farmers",   est:75,  vel:5, v:false, mats:[{h:236774,q:3},{h:236778,q:2},{r:240990,q:1}], tradeable:true },
+  { id:241312, name:"Haranir Phial of Ingenuity",   cat:"Phial", kind:"vial",  role:"crafting · sells to crafters",   est:80,  vel:5, v:false, mats:[{h:236770,q:3},{h:236778,q:2},{r:240990,q:1}], tradeable:true },
+  { id:241317, name:"Haranir Phial of Perception",  cat:"Phial", kind:"vial",  role:"gathering · rare-find buff",     est:85,  vel:4, v:false, mats:[{h:236774,q:3},{h:236778,q:2},{r:240990,q:1}], tradeable:true },
+  // ── Light potions ── VERIFIED from leveling guides
+  { id:241309, name:"Light's Potential",            cat:"Light Potion", kind:"potion", role:"safe stat potion · bulk seller", est:55, vel:10, v:true,  mats:[{h:236761,q:8},{h:236774,q:3},{h:236776,q:3},{r:236949,q:1},{r:240990,q:5}], tradeable:true },
+  { id:241296, gid:241297, name:"Potion of Zealotry",           cat:"Light Potion", kind:"potion", role:"Light combat variant",     est:48, vel:6, v:false, mats:[{h:236761,q:6},{h:236774,q:3},{r:240990,q:5}], tradeable:true },
+  { id:241300, gid:241301, name:"Lightfused Mana Potion",       cat:"Light Potion", kind:"potion", role:"healer mana potion",       est:42, vel:8, v:true,  mats:[{h:236761,q:8},{h:236778,q:3},{r:240990,q:5}], tradeable:true },
+  { id:241305, gid:241304, name:"Silvermoon Health Potion",     cat:"Light Potion", kind:"potion", role:"health · off combat CD",   est:30, vel:9, v:true,  mats:[{h:236761,q:6},{r:240990,q:5}], tradeable:true },
+  { id:237055, name:"Refreshing Serum",             cat:"Light Potion", kind:"potion", role:"early utility · Stone mat", est:25, vel:4, v:true,  mats:[{h:236761,q:8},{h:236770,q:3},{r:240990,q:5}], tradeable:true },
+  // ── Void potions ── Recklessness VERIFIED, others ESTIMATED
+  { id:241332000, name:"Potion of Recklessness",    cat:"Void Potion", kind:"potion", role:"big stats, lose lowest · renown-gated", est:90, vel:4, v:true,  mats:[{h:236761,q:8},{h:236774,q:4},{r:236950,q:2},{r:240990,q:5}], tradeable:true },
+  { id:241292, name:"Draught of Rampant Abandon",   cat:"Void Potion", kind:"potion", role:"more stats · puddle silences", est:70, vel:6, v:false, mats:[{h:236780,q:1},{h:236770,q:2},{r:240990,q:5}], tradeable:true },
+  { id:241295, name:"Potion of Devoured Dreams",    cat:"Void Potion", kind:"potion", role:"void utility · risk/reward",   est:60, vel:4, v:false, mats:[{h:236770,q:3},{h:236778,q:2},{r:236952,q:1},{r:240990,q:5}], tradeable:true },
+  { id:268954, gid:268955, name:"Entropic Extract",             cat:"Void Potion", kind:"potion", role:"early void leveling potion",   est:22, vel:3, v:true,  mats:[{h:236761,q:3},{r:240990,q:5}], tradeable:true },
   // ── Reagents / transmute products ──
-  { id:237200, name:"Wondrous Synergist",           cat:"Reagent", kind:"vial", role:"daily · value unproven",      est:260, vel:2, mats:[{h:236780,q:1},{h:236776,q:5}], cooldown:"18h", tradeable:true },
-  { id:237201, name:"Composite Flora",              cat:"Reagent", kind:"vial", role:"crafted reagent · feeds recipes", est:40, vel:5, mats:[{h:236761,q:6},{h:236776,q:4}], tradeable:true },
+  { id:237200, name:"Wondrous Synergist",           cat:"Reagent", kind:"vial", role:"daily · value unproven",      est:260, vel:2, v:false, mats:[{h:236780,q:1},{h:236776,q:5}], cooldown:"18h", tradeable:true },
+  { id:237201, name:"Composite Flora",              cat:"Reagent", kind:"vial", role:"crafted reagent · feeds recipes", est:40, vel:5, v:true,  mats:[{h:236761,q:6},{h:236776,q:4},{r:236951,q:4},{r:236950,q:4}], tradeable:true },
   // ── Bound · never sold (listed, flagged) ──
-  { id:237300, name:"Cauldron of Sin'dorei Flasks", cat:"Cauldron", kind:"cauldron", role:"raid utility · bound", est:null, vel:0, mats:[{h:236780,q:8},{h:236770,q:20},{h:236776,q:20}], tradeable:false },
+  { id:237300, name:"Cauldron of Sin'dorei Flasks", cat:"Cauldron", kind:"cauldron", role:"raid utility · bound", est:null, vel:0, v:false, mats:[{h:236780,q:8},{h:236770,q:20},{h:236776,q:20}], tradeable:false },
 ];
 
 // ── THE FULL ALCHEMY ENCYCLOPEDIA ──────────────────────────
@@ -343,9 +351,15 @@ function rankCraft(price){
     else if(pb!=null){ saleSilver=pb; }
     else { saleSilver=prod.est ?? null; }          // fall back to estimate
     const baseline = saleSilver ?? prod.est ?? 0;
-    const herbCost = (prod.mats||[]).reduce((s,m)=>{ const h=HERB(m.h); return s + (h?((price(h.id)??h.est??0)*m.q):0); },0);
-    return { id:prod.id, item:prod, sale:baseline, saleSilver, saleGold, herbCost,
-             marginGathered:baseline, marginBuy:baseline-herbCost, margin:baseline,
+    const cost = matCost(prod.mats, price);                 // herbs + vials + motes
+    const herbCost = matCost((prod.mats||[]).filter(m=>m.h), price); // herb portion only
+    const reagentCost = cost - herbCost;                    // vials + motes
+    // "gathered" = you farmed the herbs free, but still bought vials/motes
+    const marginGathered = baseline - reagentCost;
+    const marginBuy = baseline - cost;
+    return { id:prod.id, item:prod, sale:baseline, saleSilver, saleGold,
+             cost, herbCost, reagentCost, verified:prod.v===true,
+             marginGathered, marginBuy, margin:baseline,
              vel:prod.vel??0, score:(saleGold ?? baseline) };
   }).sort((a,b)=> b.score-a.score || b.vel-a.vel );
   return scored.map((s,i)=>({ ...s, rank:i+1, grade:gradeFor(i,scored.length), why:ALCH_NOTE[s.id]||s.item.role }));
@@ -408,21 +422,32 @@ const DEFAULT_CHAR = { name:"Gilshi", realm:"Moon Guard", faction:"Alliance", ra
 
 async function fetchPrices(realm){
   // Calls our own serverless proxy (/api/prices), which talks to Undermine
-  // Exchange server-side. Returns { itemId: goldPrice } for whatever UE has;
-  // missing ids fall back to each item's labeled estimate in the app.
-  const allIds=[...HERBS,...PRODUCTS].flatMap(i=>[i.id, i.gid].filter(Boolean));
+  // Exchange server-side. Returns { prices:{id:gold}, realm, updated } so the
+  // app can show which realm and how fresh the numbers are.
+  const allIds=[...HERBS,...PRODUCTS,...REAGENTS].flatMap(i=>[i.id, i.gid].filter(Boolean));
   const ids=[...new Set(allIds)].join(",");
   const region=CONFIG.ue.region||"us";
   try{
     const r=await fetch("/api/prices?region="+region+"&realm="+encodeURIComponent(realm)+"&ids="+ids);
     if(!r.ok) return null;
     const d=await r.json();
-    // normalize keys to strings so price(id) lookups match
-    const out={}; for(const k in d){ if(d[k]!=null) out[String(k)]=d[k]; }
-    return out;
+    const src = d.prices || d; // tolerate either shape
+    const out={}; for(const k in src){ if(src[k]!=null) out[String(k)]=src[k]; }
+    return { prices:out, realm, region, updated: d.updated || Date.now() };
   }catch{return null;}
 }
 const fmtG = n => n==null?"-":n>=1000?`${(n/1000).toFixed(1)}k`:Math.round(n).toLocaleString();
+
+// total material cost of a recipe across BOTH herbs and reagents (vials, motes).
+// price(id) is the live lookup; falls back to each mat's labeled estimate.
+function matCost(mats, price){
+  return (mats||[]).reduce((sum,m)=>{
+    const id = m.h ?? m.r;
+    const mat = MAT(id);
+    const unit = (price && price(id)!=null) ? price(id) : (mat?.est ?? 0);
+    return sum + unit*(m.q||0);
+  },0);
+}
 
 // in-game quality marks: silver diamond (lower), gold glowing pentagon (higher)
 function QSilver({ size=12 }){
@@ -761,7 +786,7 @@ function Tag({ children, color=C.ink, small }){
 const pad = { padding:"30px 32px 26px", height:"100%", boxSizing:"border-box", display:"flex", flexDirection:"column" };
 
 /* ── OVERVIEW — the page you land on, a night's plan at a glance ── */
-function Overview({ price, loading, live, go }){
+function Overview({ price, loading, live, go, meta }){
   const herbs = rankHerbs(price).slice(0,10);
   const craft = rankCraft(price).slice(0,10);
   return <div style={pad}>
@@ -802,7 +827,7 @@ function Overview({ price, loading, live, go }){
     </div>
 
     <div style={{marginTop:"auto", display:"flex", gap:14, alignItems:"flex-start", paddingTop:10}}>
-      <span style={{flexShrink:0, fontFamily:DISPLAY, fontStyle:"italic", fontSize:11, color:live?C.verdigris:C.inkFaint}}>{live?"● live prices":"by my own reckoning"}</span>
+      <span style={{flexShrink:0}}><PriceStamp live={live} meta={meta}/></span>
       <Hand size={13} color={C.greenDk} tilt={-0.4} style={{flex:1}}>
         {live ? "the goblin market feeds these now. since i gather my own herbs, the gathered coin is what i truly keep." : "i set these by hand until the goblin market speaks."}
       </Hand>
@@ -896,13 +921,25 @@ function SpecMount({ id, mini, feature, price, loading, go }){
 }
 
 /* ── WORTH (Field Notes · live ranking · numbers stay plain) ── */
-function Worth({ price, loading, live }){
+function fmtAgo(ts){
+  if(!ts) return "";
+  const m=Math.round((Date.now()-ts)/60000);
+  if(m<1) return "just now"; if(m<60) return m+"m ago";
+  const h=Math.round(m/60); return h<24?h+"h ago":Math.round(h/24)+"d ago";
+}
+function PriceStamp({ live, meta }){
+  if(!live) return <span style={{fontFamily:DISPLAY, fontSize:10.5, fontStyle:"italic", color:C.inkFaint}}>by my reckoning</span>;
+  return <span style={{fontFamily:DISPLAY, fontSize:10.5, fontStyle:"italic", color:C.verdigris, textAlign:"right", lineHeight:1.3}}>
+    ● live · {meta&&meta.realm?meta.realm:"realm"}{meta&&meta.updated?<span style={{color:C.inkFaint}}><br/>updated {fmtAgo(meta.updated)}</span>:null}
+  </span>;
+}
+function Worth({ price, loading, live, meta }){
   const [side,setSide]=useState("herb");
   const ranked = side==="herb"?rankHerbs(price):rankCraft(price);
   return <div style={pad}>
     <div style={{display:"flex", justifyContent:"space-between", alignItems:"baseline", marginBottom:8}}>
       <Eyebrow>{side==="herb"?"what to gather · by coin":"what to make · by margin"}</Eyebrow>
-      <span style={{fontFamily:DISPLAY, fontSize:10.5, fontStyle:"italic", color:live?C.verdigris:C.inkFaint}}>{live?"● live prices":"by my reckoning"}</span>
+      <PriceStamp live={live} meta={meta}/>
     </div>
     <div style={{display:"flex", gap:6, marginBottom:12}}>
       {[["herb","the gathering"],["alch","the making"]].map(([k,l])=>(
@@ -1012,12 +1049,18 @@ function FormularyPage({ price, loading }){
           <div onClick={()=>setOpen(isOpen?null:r.name)} style={{display:"flex", gap:12, padding:"11px 0", cursor:"pointer", alignItems:"flex-start"}}>
             <div style={{flexShrink:0}}><Vial kind={r.kind} color={r.bound?C.plum:C.ochre} size={28}/></div>
             <div style={{flex:1}}>
-              <div style={{display:"flex", justifyContent:"space-between", gap:8, flexWrap:"wrap"}}>
+              <div style={{display:"flex", justifyContent:"space-between", gap:8, flexWrap:"wrap", alignItems:"center"}}>
                 <h3 style={{fontFamily:DISPLAY, fontSize:16, fontWeight:400, margin:0, color:C.ink}}>{r.name}</h3>
-                <div style={{display:"flex", gap:5}}>{r.bound&&<Tag small color={C.plum}>bound</Tag>}{r.mc&&<Tag small color={C.verdigris}>multicrafts</Tag>}</div>
+                <div style={{display:"flex", gap:5, alignItems:"center"}}>{(()=>{const pr=PRODUCTS.find(p=>p.name===r.name); return pr?<VBadge verified={pr.v===true}/>:null;})()}{r.bound&&<Tag small color={C.plum}>bound</Tag>}{r.mc&&<Tag small color={C.verdigris}>multicrafts</Tag>}</div>
               </div>
               <div style={{fontFamily:BODY, fontSize:12.5, color:C.inkSoft, marginTop:2, lineHeight:1.5}}>{r.effect}</div>
-              {hasM&&<div style={{display:"flex", gap:8, flexWrap:"wrap", marginTop:7}}>{r.mats.map((m,j)=>{const h=HERB(m.h); if(!h)return null; return <span key={j} style={{display:"inline-flex", alignItems:"center", gap:4, background:C.paperDeep, border:"1px solid "+C.ruleSoft, padding:"2px 7px 2px 3px", borderRadius:3}}><Pressed id={m.h} size={16}/><span style={{fontFamily:DISPLAY, fontSize:11, color:C.ink}}>{m.q}× {h.name.split(" ")[0]}</span><span style={{fontFamily:DISPLAY, fontSize:10, color:C.ochreDeep}}>· {loading?"…":fmtG((price(h.id)??h.est)*m.q)}g</span></span>;})}</div>}
+              {(()=>{const pr=PRODUCTS.find(p=>p.name===r.name); const mats=(pr&&pr.mats)||r.mats; if(!mats||!mats.length)return null;
+                return <div style={{display:"flex", gap:8, flexWrap:"wrap", marginTop:7}}>{mats.map((m,j)=>{const id=m.h??m.r; const mat=MAT(id); if(!mat)return null; const isHerb=!!m.h;
+                  return <span key={j} style={{display:"inline-flex", alignItems:"center", gap:4, background:C.paperDeep, border:"1px solid "+C.ruleSoft, padding:"2px 7px 2px 4px", borderRadius:3}}>
+                    {isHerb?<Pressed id={id} size={16}/>:<span style={{width:8,height:8,borderRadius:"50%",background:mat.color||C.ochre,display:"inline-block"}}/>}
+                    <span style={{fontFamily:DISPLAY, fontSize:11, color:C.ink}}>{m.q}× {mat.short||mat.name.split(" ")[0]}</span>
+                    <span style={{fontFamily:DISPLAY, fontSize:10, color:C.ochreDeep}}>· {loading?"…":fmtG((price(id)??mat.est??0)*m.q)}g</span>
+                  </span>;})}</div>;})()}
               {isOpen&&<div style={{marginTop:9, paddingTop:9, borderTop:"1px dashed "+C.rule, display:"flex", flexDirection:"column", gap:6}}>
                 <div style={{fontSize:12, color:C.ink}}><i style={{color:C.inkFaint}}>tree</i> &nbsp;{r.tree}</div>
                 <div style={{fontSize:12, color:C.ink}}><i style={{color:C.inkFaint}}>unlock</i> &nbsp;{r.unlock}</div>
@@ -1038,12 +1081,18 @@ function ScalePage({ price, loading }){
   const [pid,setPid]=useState(sellable[0]?.id);
   const [n,setN]=useState(20);
   const prod=PRODUCTS.find(p=>p.id===pid) || sellable[0];
-  const sale=price(prod.id)??prod.est??0;
-  const herbCost=(prod.mats||[]).reduce((s,m)=>{const h=HERB(m.h);return s+(h?(price(h.id)??h.est??0)*m.q:0);},0);
-  const gathered=sale;            // herbs free → sell price is the profit
-  const bought=sale-herbCost;     // if you bought the herbs
+  const pa=price(prod.id)??null, pb=prod.gid?(price(prod.gid)??null):null;
+  const sale = (pa!=null||pb!=null) ? Math.max(pa??0,pb??0) : (prod.est??0);
+  const herbCost = matCost((prod.mats||[]).filter(m=>m.h), price);
+  const reagentCost = matCost((prod.mats||[]).filter(m=>m.r), price); // vials + motes, always paid
+  const gathered = sale - reagentCost;     // herbs free, but vials/motes still cost
+  const bought = sale - herbCost - reagentCost;
+  const verified = prod.v===true;
   return <div style={pad}>
-    <Eyebrow>the scale · weigh a craft</Eyebrow>
+    <div style={{display:"flex", justifyContent:"space-between", alignItems:"baseline"}}>
+      <Eyebrow>the scale · weigh a craft</Eyebrow>
+      <VBadge verified={verified}/>
+    </div>
     <Title size={22}>What it leaves in hand</Title>
     <div style={{display:"flex", gap:10, alignItems:"flex-end", flexWrap:"wrap", marginBottom:14}}>
       <div><div style={{fontFamily:DISPLAY, fontSize:10.5, textTransform:"uppercase", letterSpacing:1, color:C.inkFaint, marginBottom:3}}>the craft</div>
@@ -1053,16 +1102,25 @@ function ScalePage({ price, loading }){
         <input type="number" min="1" value={n} onChange={e=>setN(Math.max(1,parseInt(e.target.value)||1))} style={{width:70, background:"transparent", border:"none", borderBottom:"1px solid "+C.rule, color:C.ink, fontFamily:DISPLAY, fontSize:18, padding:"2px 0"}}/>
       </div>
     </div>
-    <div style={{display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:10, marginBottom:8}}>
-      {[["sells for",sale,C.sanguine],["herbs cost",herbCost,C.inkSoft],["you keep",gathered,gathered>0?C.ochreDeep:C.sanguine]].map(([l,v,col],i)=>(
-        <div key={i} style={{textAlign:"center", padding:"12px 4px", background:C.card, border:"1px solid "+C.ruleSoft}}>
-          <div style={{fontFamily:DISPLAY, fontSize:21, color:col}}>{loading?"…":fmtG(v)}<span style={{fontSize:11, fontStyle:"italic"}}> g</span></div>
-          <div style={{fontFamily:DISPLAY, fontSize:9.5, textTransform:"uppercase", letterSpacing:.4, color:C.inkFaint, marginTop:2}}>{l}</div>
+    {/* the recipe, spelled out */}
+    <div style={{display:"flex", gap:7, flexWrap:"wrap", marginBottom:12}}>
+      {(prod.mats||[]).map((m,j)=>{const id=m.h??m.r; const mat=MAT(id); if(!mat)return null; const isHerb=!!m.h;
+        return <span key={j} style={{display:"inline-flex", alignItems:"center", gap:5, background:C.paperDeep, border:"1px solid "+C.ruleSoft, padding:"3px 8px", borderRadius:3}}>
+          {isHerb?<Pressed id={id} size={15}/>:<span style={{width:8,height:8,borderRadius:"50%",background:mat.color||C.ochre,display:"inline-block"}}/>}
+          <span style={{fontFamily:DISPLAY, fontSize:11.5, color:C.ink}}>{m.q}× {mat.short || mat.name.split(" ")[0]}</span>
+          <span style={{fontFamily:DISPLAY, fontSize:10.5, color:C.ochreDeep}}>{loading?"…":fmtG((price(id)??mat.est??0)*m.q)}g</span>
+        </span>;})}
+    </div>
+    <div style={{display:"grid", gridTemplateColumns:"1fr 1fr 1fr 1fr", gap:8, marginBottom:8}}>
+      {[["sells for",sale,C.sanguine],["vials/motes",reagentCost,C.inkSoft],["herbs",herbCost,C.inkSoft],["you keep",gathered,gathered>0?C.ochreDeep:C.sanguine]].map(([l,v,col],i)=>(
+        <div key={i} style={{textAlign:"center", padding:"11px 3px", background:C.card, border:"1px solid "+C.ruleSoft}}>
+          <div style={{fontFamily:DISPLAY, fontSize:17, color:col}}>{loading?"…":fmtG(v)}<span style={{fontSize:10, fontStyle:"italic"}}> g</span></div>
+          <div style={{fontFamily:DISPLAY, fontSize:9, textTransform:"uppercase", letterSpacing:.3, color:C.inkFaint, marginTop:2}}>{l}</div>
         </div>
       ))}
     </div>
     <div style={{fontFamily:DISPLAY, fontSize:11, fontStyle:"italic", color:C.inkFaint, marginBottom:14, textAlign:"center"}}>
-      the herbs you gather cost you nothing, so "you keep" is the full sell price. if you bought every herb instead, you'd keep {fmtG(bought)}g.
+      you gather the herbs free, but vials and motes are still bought, so "you keep" is the sell price minus those. buying every herb too, you'd keep {fmtG(bought)}g.
     </div>
     <div style={{textAlign:"center", padding:"14px", background:C.paperDeep, border:"1px solid "+C.rule}}>
       <div style={{fontFamily:DISPLAY, fontSize:13, fontStyle:"italic", color:C.inkSoft}}>{n} of these, gathered, leaves you</div>
@@ -1070,6 +1128,14 @@ function ScalePage({ price, loading }){
     </div>
     <Hand size={13} color={C.greenDk} tilt={-0.4} style={{marginTop:14}}>before multicraft's luck, every proc on top is found coin.</Hand>
   </div>;
+}
+// verified / estimated badge
+function VBadge({ verified }){
+  return <span style={{display:"inline-flex", alignItems:"center", gap:5, fontFamily:DISPLAY, fontSize:10, letterSpacing:.5, textTransform:"uppercase",
+    color: verified?C.verdigris:C.inkFaint, border:"1px solid "+(verified?C.verdigris:C.rule), borderRadius:10, padding:"1px 8px", opacity:0.95}}>
+    <span style={{width:6, height:6, borderRadius:"50%", background:verified?C.verdigris:"transparent", border:"1px solid "+(verified?C.verdigris:C.inkFaint)}}/>
+    {verified?"verified recipe":"estimated recipe"}
+  </span>;
 }
 
 /* ── MULTICRAFT BENCH (tool · plainer) ── */
@@ -1331,11 +1397,11 @@ function IndexPage({ go }){
 
 /* which component pair renders for a section (left leaf, right leaf) */
 function spreadFor(key, ctx){
-  const { price, loading, live, go, build, setBuild } = ctx;
+  const { price, loading, live, go, build, setBuild, priceMeta } = ctx;
   switch(key){
-    case "overview":  return [<Overview key="ol" price={price} loading={loading} live={live} go={go}/>, <OverviewRight key="or" go={go}/>];
+    case "overview":  return [<Overview key="ol" price={price} loading={loading} live={live} go={go} meta={priceMeta}/>, <OverviewRight key="or" go={go}/>];
     case "specimens": return [<SpecLeft key="sl" price={price} loading={loading} go={go}/>, <SpecRight key="sr" price={price} loading={loading} go={go}/>];
-    case "worth":     return [<Worth key="wl" price={price} loading={loading} live={live}/>, <WorthHelp key="wr"/>];
+    case "worth":     return [<Worth key="wl" price={price} loading={loading} live={live} meta={priceMeta}/>, <WorthHelp key="wr"/>];
     case "knowing":   return [<Knowing key="kl"/>, <KnowingHelp key="kr"/>];
     case "formulary": return [<FormularyPage key="fl" price={price} loading={loading}/>, null];
     case "scale":     return [<ScalePage key="cl" price={price} loading={loading}/>, <BenchPage key="cr" price={price} loading={loading}/>];
@@ -1382,7 +1448,7 @@ export default function App(){
   const [scene, setScene] = useState("table");
   const [turning, setTurning] = useState(false);
   const [mobile, setMobile] = useState(typeof window!=="undefined" && window.innerWidth<820);
-  const [prices, setPrices] = useState(null);
+  const [priceData, setPriceData] = useState(null); // { prices, realm, region, updated }
   const [loading, setLoading] = useState(false);
   const [build, setBuild] = useState({ herb:{}, alch:{} });
   const [navOpen, setNavOpen] = useState(false);
@@ -1394,18 +1460,18 @@ export default function App(){
 
   // price fetch — runs only if CONFIG.ue.enabled (live); otherwise estimates stand
   useEffect(()=>{
-    let live=false;
     if(CONFIG.ue.enabled){
       setLoading(true);
-      fetchPrices(CONFIG.ue.realm).then(p=>{ setPrices(p); setLoading(false); });
-      live=true;
+      fetchPrices(CONFIG.ue.realm).then(p=>{ setPriceData(p); setLoading(false); });
     }
   },[]);
+  const prices = priceData && priceData.prices;
   const price = useCallback((id)=> (prices && prices[id]!=null) ? prices[id] : null, [prices]);
   const live = CONFIG.ue.enabled && !!prices;
+  const priceMeta = { realm: (priceData&&priceData.realm)||CONFIG.ue.realm, updated: priceData&&priceData.updated, live };
 
   const turnTo = (key)=>{ if(key===section){return;} setTurning(true); setTimeout(()=>{ setSection(key); setTurning(false); }, 500); };
-  const ctx = { price, loading, live, go:turnTo, build, setBuild };
+  const ctx = { price, loading, live, go:turnTo, build, setBuild, priceMeta };
   const isIndex = section==="index";
   const curIdx = SECTIONS.findIndex(s=>s.key===section);
   const curSec = SECTIONS[curIdx] || null;
