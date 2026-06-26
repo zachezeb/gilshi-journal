@@ -31,7 +31,7 @@ const HAND = "'Segoe Script','Bradley Hand','Brush Script MT',cursive";
 
 /* ── DATA ───────────────────────────────────────────────────── */
 const HERBS = [
-  { id:236761, name:"Tranquility Bloom", latin:"Flos tranquillitatis", no:"01", role:"common potion base", tier:"common", est:8,  vel:10, color:C.sage },
+  { id:236761, gid:236767, name:"Tranquility Bloom", latin:"Flos tranquillitatis", no:"01", role:"common potion base", tier:"common", est:8,  vel:10, color:C.sage },
   { id:236776, name:"Argentleaf",        latin:"Folium argenteum",     no:"02", role:"flask reagent",       tier:"common", est:14, vel:8,  color:C.verdigris },
   { id:236774, name:"Azeroot",           latin:"Radix azerothi",       no:"03", role:"potion base",         tier:"common", est:9,  vel:7,  color:C.verdigris },
   { id:236778, name:"Mana Lily",         latin:"Lilium manae",         no:"04", role:"inscription & potions",tier:"common", est:11, vel:8,  color:C.ink2 },
@@ -53,10 +53,10 @@ const MOTES = [
 // ids are real where verified; placeholders resolve to real ids by name when hosted.
 const PRODUCTS = [
   // ── Flasks (combat · one per secondary stat) ──
-  { id:241326, name:"Flask of the Shattered Sun",   cat:"Flask", kind:"flask", role:"Crit flask · flagship seller",  est:420, vel:9, mats:[{h:236780,q:1},{h:236774,q:8},{h:236776,q:6}], tradeable:true },
-  { id:241322, name:"Flask of the Magisters",       cat:"Flask", kind:"flask", role:"Mastery · default healer flask", est:430, vel:9, mats:[{h:236780,q:1},{h:236770,q:8},{h:236778,q:6}], tradeable:true },
-  { id:241325, name:"Flask of the Blood Knights",   cat:"Flask", kind:"flask", role:"Haste · often top DPS flask",    est:445, vel:8, mats:[{h:236780,q:1},{h:236770,q:6},{h:236776,q:8}], tradeable:true },
-  { id:241320, name:"Flask of Thalassian Resistance",cat:"Flask",kind:"flask", role:"Vers · the base flask",          est:300, vel:5, mats:[{h:236780,q:1},{h:236774,q:8},{h:236776,q:6}], tradeable:true },
+  { id:241326, gid:241327, name:"Flask of the Shattered Sun",   cat:"Flask", kind:"flask", role:"Crit flask · flagship seller",  est:420, vel:9, mats:[{h:236780,q:1},{h:236774,q:8},{h:236776,q:6}], tradeable:true },
+  { id:241322, gid:241323, name:"Flask of the Magisters",       cat:"Flask", kind:"flask", role:"Mastery · default healer flask", est:430, vel:9, mats:[{h:236780,q:1},{h:236770,q:8},{h:236778,q:6}], tradeable:true },
+  { id:241325, gid:241324, name:"Flask of the Blood Knights",   cat:"Flask", kind:"flask", role:"Haste · often top DPS flask",    est:445, vel:8, mats:[{h:236780,q:1},{h:236770,q:6},{h:236776,q:8}], tradeable:true },
+  { id:241320, gid:241321, name:"Flask of Thalassian Resistance",cat:"Flask",kind:"flask", role:"Vers · the base flask",          est:300, vel:5, mats:[{h:236780,q:1},{h:236774,q:8},{h:236776,q:6}], tradeable:true },
   // ── Phials (profession stats) ──
   { id:241311, name:"Haranir Phial of Finesse",     cat:"Phial", kind:"vial",  role:"gathering · sells to farmers",   est:75,  vel:5, mats:[{h:236774,q:3},{h:236778,q:2}], tradeable:true },
   { id:241312, name:"Haranir Phial of Ingenuity",   cat:"Phial", kind:"vial",  role:"crafting · sells to crafters",   est:80,  vel:5, mats:[{h:236774,q:3},{h:236778,q:2}], tradeable:true },
@@ -313,24 +313,27 @@ const gradeFor = (rankIdx, total) => {
 // returns herbs sorted by live (or estimated) sale price, velocity as tiebreaker
 function rankHerbs(price){
   const scored = HERBS.map(h=>{
-    const p = price(h.id) ?? h.est ?? 0;
-    return { id:h.id, item:h, price:p, vel:h.vel??0, score:p };
+    const saleSilver = price(h.id) ?? h.est ?? 0;
+    const saleGold = h.gid ? (price(h.gid) ?? null) : null;
+    return { id:h.id, item:h, price:saleSilver, saleSilver, saleGold, vel:h.vel??0, score:saleSilver };
   }).sort((a,b)=> b.score-a.score || b.vel-a.vel );
   return scored.map((s,i)=>({ ...s, rank:i+1, grade:gradeFor(i,scored.length), why:HERB_NOTE[s.id]||s.item.role }));
 }
 
 // UE's commodity feed returns ONE price per item — the market sell price in gold.
 
-// returns tradeable craftables, ranked by what they sell for on the market.
-//   marginGathered = sale (your herbs are free, so the sell price IS your profit)
-//   marginBuy = sale − herb cost (if you bought the herbs instead)
+// returns tradeable craftables with BOTH qualities' market prices.
+//   saleSilver = baseline quality price   saleGold = best-materials quality price
+// Ranked by the silver (baseline) price. Gold shown alongside where it exists.
 function rankCraft(price){
   const sellable = PRODUCTS.filter(p=>p.tradeable);
   const scored = sellable.map(prod=>{
-    const sale = price(prod.id) ?? prod.est ?? 0;
+    const saleSilver = price(prod.id) ?? prod.est ?? 0;
+    const saleGold = prod.gid ? (price(prod.gid) ?? null) : null;
     const herbCost = (prod.mats||[]).reduce((s,m)=>{ const h=HERB(m.h); return s + (h?((price(h.id)??h.est??0)*m.q):0); },0);
-    return { id:prod.id, item:prod, sale, herbCost,
-             marginGathered:sale, marginBuy:sale-herbCost, margin:sale, vel:prod.vel??0, score:sale };
+    return { id:prod.id, item:prod, sale:saleSilver, saleSilver, saleGold, herbCost,
+             marginGathered:saleSilver, marginBuy:saleSilver-herbCost, margin:saleSilver,
+             vel:prod.vel??0, score:saleSilver };
   }).sort((a,b)=> b.score-a.score || b.vel-a.vel );
   return scored.map((s,i)=>({ ...s, rank:i+1, grade:gradeFor(i,scored.length), why:ALCH_NOTE[s.id]||s.item.role }));
 }
@@ -394,7 +397,8 @@ async function fetchPrices(realm){
   // Calls our own serverless proxy (/api/prices), which talks to Undermine
   // Exchange server-side. Returns { itemId: goldPrice } for whatever UE has;
   // missing ids fall back to each item's labeled estimate in the app.
-  const ids=[...HERBS,...PRODUCTS].map(i=>i.id).join(",");
+  const allIds=[...HERBS,...PRODUCTS].flatMap(i=>[i.id, i.gid].filter(Boolean));
+  const ids=[...new Set(allIds)].join(",");
   const region=CONFIG.ue.region||"us";
   try{
     const r=await fetch("/api/prices?region="+region+"&realm="+encodeURIComponent(realm)+"&ids="+ids);
@@ -665,7 +669,7 @@ function Overview({ price, loading, live, go }){
           <Vial kind={r.item.kind} color={C.ochre} size={24}/>
           <div style={{flex:1, minWidth:0}}>
             <div style={{fontFamily:DISPLAY, fontSize:14.5, color:C.ink, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis"}}>{r.item.name}</div>
-            <div style={{fontFamily:DISPLAY, fontSize:10.5, fontStyle:"italic", color:C.inkFaint}}>{loading?"":"sells for "+fmtG(r.sale)+"g each"}</div>
+            <div style={{fontFamily:DISPLAY, fontSize:10.5, fontStyle:"italic", color:C.inkFaint}}>{loading?"":<>silver {fmtG(r.saleSilver)}g{r.saleGold!=null?" · gold "+fmtG(r.saleGold)+"g":""}</>}</div>
           </div>
           <div style={{textAlign:"right", flexShrink:0}}>
             <div style={{fontFamily:DISPLAY, fontSize:16, color:r.marginGathered>0?C.ochreDeep:C.sanguine}}>{loading?"…":fmtG(r.marginGathered)}<span style={{fontSize:10, fontStyle:"italic"}}> g</span></div>
@@ -784,8 +788,14 @@ function Worth({ price, loading, live }){
           <div style={{flex:1}}>
             <div style={{fontFamily:DISPLAY, fontSize:15.5, color:C.ink}}>{r.item.name}</div>
             {side==="herb"
-              ? <div style={{fontFamily:DISPLAY, fontSize:12.5, color:C.inkFaint}}>{r.price==null?<span style={{fontStyle:"italic"}}>not on the market right now</span>:<span>sells for <span style={{color:C.sanguine, fontSize:15}}>{fmtG(r.price)}g</span> each</span>}</div>
-              : <div style={{fontFamily:DISPLAY, fontSize:12.5, color:C.inkFaint}}>{r.sale==null?<span style={{fontStyle:"italic"}}>not on the market right now</span>:<span>sells for <span style={{color:C.sanguine, fontSize:15}}>{fmtG(r.sale)}g</span> each</span>}</div>}
+              ? <div style={{fontFamily:DISPLAY, fontSize:12.5, color:C.inkFaint}}>
+                  <span>silver <span style={{color:C.sanguine, fontSize:15}}>{r.saleSilver==null?"—":fmtG(r.saleSilver)+"g"}</span></span>
+                  <span> · gold {r.saleGold==null?<span style={{fontStyle:"italic", fontSize:11}}>not listed</span>:<span style={{color:C.ochreDeep, fontSize:15}}>{fmtG(r.saleGold)}g</span>}</span>
+                </div>
+              : <div style={{fontFamily:DISPLAY, fontSize:12.5, color:C.inkFaint}}>
+                  <span>silver <span style={{color:C.sanguine, fontSize:15}}>{r.saleSilver==null?"—":fmtG(r.saleSilver)+"g"}</span></span>
+                  <span> · gold {r.saleGold==null?<span style={{fontStyle:"italic", fontSize:11}}>not listed</span>:<span style={{color:C.ochreDeep, fontSize:15}}>{fmtG(r.saleGold)}g</span>}</span>
+                </div>}
           </div>
         </div>
       ))}
