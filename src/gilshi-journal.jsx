@@ -53,24 +53,24 @@ const MOTES = [
 // ids are real where verified; placeholders resolve to real ids by name when hosted.
 const PRODUCTS = [
   // ── Flasks (combat · one per secondary stat) ──
-  { id:237100, name:"Flask of the Shattered Sun",   cat:"Flask", kind:"flask", role:"Crit flask · flagship seller",  est:420, vel:9, mats:[{h:236780,q:1},{h:236774,q:8},{h:236776,q:6}], tradeable:true },
-  { id:237101, name:"Flask of the Magisters",       cat:"Flask", kind:"flask", role:"Mastery · default healer flask", est:430, vel:9, mats:[{h:236780,q:1},{h:236770,q:8},{h:236778,q:6}], tradeable:true },
-  { id:237103, name:"Flask of the Blood Knights",   cat:"Flask", kind:"flask", role:"Haste · often top DPS flask",    est:445, vel:8, mats:[{h:236780,q:1},{h:236770,q:6},{h:236776,q:8}], tradeable:true },
-  { id:237104, name:"Flask of Thalassian Resistance",cat:"Flask",kind:"flask", role:"Vers · the base flask",          est:300, vel:5, mats:[{h:236780,q:1},{h:236774,q:8},{h:236776,q:6}], tradeable:true },
+  { id:241326, name:"Flask of the Shattered Sun",   cat:"Flask", kind:"flask", role:"Crit flask · flagship seller",  est:420, vel:9, mats:[{h:236780,q:1},{h:236774,q:8},{h:236776,q:6}], tradeable:true },
+  { id:241322, name:"Flask of the Magisters",       cat:"Flask", kind:"flask", role:"Mastery · default healer flask", est:430, vel:9, mats:[{h:236780,q:1},{h:236770,q:8},{h:236778,q:6}], tradeable:true },
+  { id:241325, name:"Flask of the Blood Knights",   cat:"Flask", kind:"flask", role:"Haste · often top DPS flask",    est:445, vel:8, mats:[{h:236780,q:1},{h:236770,q:6},{h:236776,q:8}], tradeable:true },
+  { id:241320, name:"Flask of Thalassian Resistance",cat:"Flask",kind:"flask", role:"Vers · the base flask",          est:300, vel:5, mats:[{h:236780,q:1},{h:236774,q:8},{h:236776,q:6}], tradeable:true },
   // ── Phials (profession stats) ──
-  { id:237102, name:"Haranir Phial of Finesse",     cat:"Phial", kind:"vial",  role:"gathering · sells to farmers",   est:75,  vel:5, mats:[{h:236774,q:3},{h:236778,q:2}], tradeable:true },
-  { id:237105, name:"Haranir Phial of Ingenuity",   cat:"Phial", kind:"vial",  role:"crafting · sells to crafters",   est:80,  vel:5, mats:[{h:236774,q:3},{h:236778,q:2}], tradeable:true },
-  { id:237106, name:"Haranir Phial of Perception",  cat:"Phial", kind:"vial",  role:"gathering · rare-find buff",     est:85,  vel:4, mats:[{h:236774,q:3},{h:236778,q:2}], tradeable:true },
+  { id:241311, name:"Haranir Phial of Finesse",     cat:"Phial", kind:"vial",  role:"gathering · sells to farmers",   est:75,  vel:5, mats:[{h:236774,q:3},{h:236778,q:2}], tradeable:true },
+  { id:241312, name:"Haranir Phial of Ingenuity",   cat:"Phial", kind:"vial",  role:"crafting · sells to crafters",   est:80,  vel:5, mats:[{h:236774,q:3},{h:236778,q:2}], tradeable:true },
+  { id:241317, name:"Haranir Phial of Perception",  cat:"Phial", kind:"vial",  role:"gathering · rare-find buff",     est:85,  vel:4, mats:[{h:236774,q:3},{h:236778,q:2}], tradeable:true },
   // ── Light potions ──
-  { id:237050, name:"Light's Potential",            cat:"Light Potion", kind:"potion", role:"safe stat potion · bulk seller", est:55, vel:10, mats:[{h:236761,q:8},{h:236774,q:3},{h:236776,q:3}], tradeable:true },
-  { id:237052, name:"Potion of Zealotry",           cat:"Light Potion", kind:"potion", role:"Light combat variant",     est:48, vel:6, mats:[{h:236761,q:6},{h:236774,q:3}], tradeable:true },
-  { id:237053, name:"Lightfused Mana Potion",       cat:"Light Potion", kind:"potion", role:"healer mana potion",       est:42, vel:8, mats:[{h:236761,q:8},{h:236778,q:3}], tradeable:true },
-  { id:237054, name:"Silvermoon Health Potion",     cat:"Light Potion", kind:"potion", role:"health · off combat CD",   est:30, vel:9, mats:[{h:236761,q:6}], tradeable:true },
+  { id:241309, name:"Light's Potential",            cat:"Light Potion", kind:"potion", role:"safe stat potion · bulk seller", est:55, vel:10, mats:[{h:236761,q:8},{h:236774,q:3},{h:236776,q:3}], tradeable:true },
+  { id:241296, name:"Potion of Zealotry",           cat:"Light Potion", kind:"potion", role:"Light combat variant",     est:48, vel:6, mats:[{h:236761,q:6},{h:236774,q:3}], tradeable:true },
+  { id:241300, name:"Lightfused Mana Potion",       cat:"Light Potion", kind:"potion", role:"healer mana potion",       est:42, vel:8, mats:[{h:236761,q:8},{h:236778,q:3}], tradeable:true },
+  { id:241305, name:"Silvermoon Health Potion",     cat:"Light Potion", kind:"potion", role:"health · off combat CD",   est:30, vel:9, mats:[{h:236761,q:6}], tradeable:true },
   { id:237055, name:"Refreshing Serum",             cat:"Light Potion", kind:"potion", role:"early utility · Stone mat", est:25, vel:4, mats:[{h:236761,q:8},{h:236770,q:3}], tradeable:true },
   // ── Void potions ──
-  { id:237051, name:"Draught of Rampant Abandon",   cat:"Void Potion", kind:"potion", role:"more stats · puddle silences", est:70, vel:6, mats:[{h:236780,q:1},{h:236770,q:2}], tradeable:true },
-  { id:237056, name:"Potion of Devoured Dreams",    cat:"Void Potion", kind:"potion", role:"void utility · risk/reward",   est:60, vel:4, mats:[{h:236770,q:3},{h:236778,q:2}], tradeable:true },
-  { id:237057, name:"Entropic Extract",             cat:"Void Potion", kind:"potion", role:"early void leveling potion",   est:22, vel:3, mats:[{h:236761,q:3}], tradeable:true },
+  { id:241292, name:"Draught of Rampant Abandon",   cat:"Void Potion", kind:"potion", role:"more stats · puddle silences", est:70, vel:6, mats:[{h:236780,q:1},{h:236770,q:2}], tradeable:true },
+  { id:241295, name:"Potion of Devoured Dreams",    cat:"Void Potion", kind:"potion", role:"void utility · risk/reward",   est:60, vel:4, mats:[{h:236770,q:3},{h:236778,q:2}], tradeable:true },
+  { id:268954, name:"Entropic Extract",             cat:"Void Potion", kind:"potion", role:"early void leveling potion",   est:22, vel:3, mats:[{h:236761,q:3}], tradeable:true },
   // ── Reagents / transmute products ──
   { id:237200, name:"Wondrous Synergist",           cat:"Reagent", kind:"vial", role:"daily · value unproven",      est:260, vel:2, mats:[{h:236780,q:1},{h:236776,q:5}], cooldown:"18h", tradeable:true },
   { id:237201, name:"Composite Flora",              cat:"Reagent", kind:"vial", role:"crafted reagent · feeds recipes", est:40, vel:5, mats:[{h:236761,q:6},{h:236776,q:4}], tradeable:true },
@@ -319,14 +319,27 @@ function rankHerbs(price){
   return scored.map((s,i)=>({ ...s, rank:i+1, grade:gradeFor(i,scored.length), why:HERB_NOTE[s.id]||s.item.role }));
 }
 
-// returns tradeable craftables sorted by MARGIN (sale − mat cost), velocity as tiebreaker
+// returns tradeable craftables with TWO margins:
+//   marginBuy = sale − all mats (if you bought the herbs)
+//   marginGathered = sale − only the mats you can't gather yourself (herbs free)
+// For a herbalist-alchemist, gathered profit is the real number, so we sort by it.
 function rankCraft(price){
   const sellable = PRODUCTS.filter(p=>p.tradeable);
   const scored = sellable.map(prod=>{
     const sale = price(prod.id) ?? prod.est ?? 0;
-    const matCost = (prod.mats||[]).reduce((s,m)=>{ const h=HERB(m.h); return s + (h?((price(h.id)??h.est??0)*m.q):0); },0);
-    const margin = sale - matCost;
-    return { id:prod.id, item:prod, sale, matCost, margin, vel:prod.vel??0, score:margin };
+    let matCost = 0, gatherableCost = 0;
+    (prod.mats||[]).forEach(m=>{
+      const h=HERB(m.h);
+      const c = h ? ((price(h.id)??h.est??0)*m.q) : 0;
+      matCost += c;
+      // herbs (and the lotus) are gatherable → free to a herbalist; motes are not
+      const isHerb = HERBS.some(x=>x.id===m.h);
+      if(isHerb) gatherableCost += c;
+    });
+    const marginBuy = sale - matCost;
+    const marginGathered = sale - (matCost - gatherableCost); // herbs free
+    return { id:prod.id, item:prod, sale, matCost, marginBuy, marginGathered,
+             margin:marginGathered, vel:prod.vel??0, score:marginGathered };
   }).sort((a,b)=> b.score-a.score || b.vel-a.vel );
   return scored.map((s,i)=>({ ...s, rank:i+1, grade:gradeFor(i,scored.length), why:ALCH_NOTE[s.id]||s.item.role }));
 }
@@ -629,33 +642,44 @@ const pad = { padding:"30px 32px 26px", height:"100%", boxSizing:"border-box", d
 
 /* ── OVERVIEW — the page you land on, a night's plan at a glance ── */
 function Overview({ price, loading, live, go }){
-  const herbs = rankHerbs(price).slice(0,3);
-  const craft = rankCraft(price).slice(0,3);
+  const herbs = rankHerbs(price).slice(0,10);
+  const craft = rankCraft(price).slice(0,10);
   return <div style={pad}>
     <Hand size={15} color={C.green} tilt={-1} style={{marginBottom:2}}>before i set out tonight —</Hand>
     <h1 style={{fontFamily:DISPLAY, fontSize:"clamp(24px,4vw,32px)", fontWeight:400, margin:"2px 0 4px", color:C.ink, lineHeight:1.05}}>The night's plan</h1>
-    <div style={{fontFamily:DISPLAY, fontSize:12.5, fontStyle:"italic", color:C.inkFaint, marginBottom:16}}>what the soil owes, and what's worth the making</div>
+    <div style={{fontFamily:DISPLAY, fontSize:12.5, fontStyle:"italic", color:C.inkFaint, marginBottom:16}}>what's selling best, and what's worth the making</div>
 
-    <Eyebrow>gather these first</Eyebrow>
-    <div style={{margin:"7px 0 14px"}}>
+    <div style={{display:"flex", justifyContent:"space-between", alignItems:"baseline"}}>
+      <Eyebrow>gather these first · top 10 by coin</Eyebrow>
+    </div>
+    <div style={{margin:"7px 0 16px"}}>
       {herbs.map((r,i)=>(
-        <div key={r.id} onClick={()=>go("worth")} style={{display:"flex", gap:11, alignItems:"center", padding:"7px 0", borderBottom:"1px solid "+C.ruleSoft, cursor:"pointer"}}>
-          <span style={{fontFamily:DISPLAY, fontSize:18, fontStyle:"italic", color:i===0?C.sanguine:C.rule, minWidth:18}}>{i+1}</span>
-          <Pressed id={r.id} size={30}/>
-          <span style={{flex:1, fontFamily:DISPLAY, fontSize:15, color:C.ink}}>{r.item.name}</span>
+        <div key={r.id} onClick={()=>go("worth")} style={{display:"flex", gap:11, alignItems:"center", padding:"6px 0", borderBottom:"1px solid "+C.ruleSoft, cursor:"pointer"}}>
+          <span style={{fontFamily:DISPLAY, fontSize:16, fontStyle:"italic", color:i===0?C.sanguine:C.rule, minWidth:18}}>{i+1}</span>
+          <Pressed id={r.id} size={26}/>
+          <span style={{flex:1, fontFamily:DISPLAY, fontSize:14.5, color:C.ink}}>{r.item.name}</span>
           <Coin value={r.price} loading={loading} size={14}/>
         </div>
       ))}
     </div>
 
-    <Eyebrow>worth the making</Eyebrow>
+    <div style={{display:"flex", justifyContent:"space-between", alignItems:"baseline"}}>
+      <Eyebrow>worth the making · top 10</Eyebrow>
+      <span style={{fontFamily:DISPLAY, fontSize:10, fontStyle:"italic", color:C.inkFaint}}>profit when YOU gathered the herbs</span>
+    </div>
     <div style={{margin:"7px 0 14px"}}>
       {craft.map((r,i)=>(
-        <div key={r.id} onClick={()=>go("worth")} style={{display:"flex", gap:11, alignItems:"center", padding:"7px 0", borderBottom:"1px solid "+C.ruleSoft, cursor:"pointer"}}>
-          <span style={{fontFamily:DISPLAY, fontSize:18, fontStyle:"italic", color:i===0?C.sanguine:C.rule, minWidth:18}}>{i+1}</span>
-          <Vial kind={r.item.kind} color={C.ochre} size={26}/>
-          <span style={{flex:1, fontFamily:DISPLAY, fontSize:15, color:C.ink}}>{r.item.name}</span>
-          <span style={{fontFamily:DISPLAY, fontSize:14, color:r.margin>0?C.ochreDeep:C.sanguine}}>{loading?"…":fmtG(r.margin)+"g"}</span>
+        <div key={r.id} onClick={()=>go("worth")} style={{display:"flex", gap:11, alignItems:"center", padding:"6px 0", borderBottom:"1px solid "+C.ruleSoft, cursor:"pointer"}}>
+          <span style={{fontFamily:DISPLAY, fontSize:16, fontStyle:"italic", color:i===0?C.sanguine:C.rule, minWidth:18}}>{i+1}</span>
+          <Vial kind={r.item.kind} color={C.ochre} size={24}/>
+          <div style={{flex:1, minWidth:0}}>
+            <div style={{fontFamily:DISPLAY, fontSize:14.5, color:C.ink, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis"}}>{r.item.name}</div>
+            <div style={{fontFamily:DISPLAY, fontSize:10.5, fontStyle:"italic", color:C.inkFaint}}>{loading?"":"sells "+fmtG(r.sale)+"g · "+fmtG(r.marginBuy)+"g if you buy herbs"}</div>
+          </div>
+          <div style={{textAlign:"right", flexShrink:0}}>
+            <div style={{fontFamily:DISPLAY, fontSize:16, color:r.marginGathered>0?C.ochreDeep:C.sanguine}}>{loading?"…":fmtG(r.marginGathered)}<span style={{fontSize:10, fontStyle:"italic"}}> g</span></div>
+            <div style={{fontFamily:DISPLAY, fontSize:9, textTransform:"uppercase", letterSpacing:.5, color:C.inkFaint}}>gathered</div>
+          </div>
         </div>
       ))}
     </div>
@@ -663,7 +687,7 @@ function Overview({ price, loading, live, go }){
     <div style={{marginTop:"auto", display:"flex", gap:14, alignItems:"flex-start", paddingTop:10}}>
       <span style={{flexShrink:0, fontFamily:DISPLAY, fontStyle:"italic", fontSize:11, color:live?C.verdigris:C.inkFaint}}>{live?"● live prices":"by my own reckoning"}</span>
       <Hand size={13} color={C.greenDk} tilt={-0.4} style={{flex:1}}>
-        {live ? "the goblin market feeds these now." : "i set these by hand until the goblin market speaks — the order will right itself when it does."}
+        {live ? "the goblin market feeds these now. since i gather my own herbs, the gathered coin is what i truly keep." : "i set these by hand until the goblin market speaks."}
       </Hand>
     </div>
   </div>;
@@ -763,7 +787,7 @@ function Worth({ price, loading, live }){
             <div style={{fontFamily:DISPLAY, fontSize:15.5, color:C.ink}}>{r.item.name}</div>
             {side==="herb"
               ? <div style={{fontFamily:DISPLAY, fontSize:12.5, color:C.inkFaint}}>~ <span style={{color:C.sanguine, fontSize:14}}>{fmtG(r.price)}g</span> the stack · moves {r.vel}/10</div>
-              : <div style={{fontFamily:DISPLAY, fontSize:12.5, color:C.inkFaint}}>margin <span style={{color:r.margin>0?C.ochreDeep:C.sanguine, fontSize:14}}>{loading?"…":fmtG(r.margin)+"g"}</span>{!loading&&<span> · {fmtG(r.sale)}−{fmtG(r.matCost)} · mv{r.vel}</span>}</div>}
+              : <div style={{fontFamily:DISPLAY, fontSize:12.5, color:C.inkFaint}}>gathered <span style={{color:r.marginGathered>0?C.ochreDeep:C.sanguine, fontSize:14}}>{loading?"…":fmtG(r.marginGathered)+"g"}</span>{!loading&&<span> · sells {fmtG(r.sale)}g · {fmtG(r.marginBuy)}g if buying herbs · mv{r.vel}</span>}</div>}
           </div>
         </div>
       ))}
