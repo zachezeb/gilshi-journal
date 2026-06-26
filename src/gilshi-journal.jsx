@@ -449,6 +449,9 @@ function QGold({ size=13 }){
    stat values are mostly unpublished, so effects are described by
    their known milestones with honest notes where precision is unknown.
    ════════════════════════════════════════════════════════════════ */
+// per-branch NODES: the real point gates and what each grants, for the visual tree.
+// Sourced from Midnight profession guides (Lorewoven, Method, Icy Veins, Wowhead).
+// "at" = points needed; nodes with parent>=0 hang off a sub-branch line.
 const SPEC_TREES = {
   herb: {
     label:"Herbalism", accent:C.verdigris, cap:90,
@@ -456,17 +459,42 @@ const SPEC_TREES = {
       { key:"botany", name:"Botany", color:C.verdigris, max:40,
         gist:"quality of life. mounted gathering at 40 — the first thing a non-druid needs.",
         milestones:[[10,"unlocks a sub-spec (Mulching / Cultivation)"],[40,"mounted herb gathering · +Finesse, +Deftness along the way"]],
-        per:"Finesse", perRate:0.9, // approx Finesse per point along the trunk (estimate)
+        per:"Finesse", perRate:0.9,
+        nodes:[
+          {at:1, t:"Botany (root)", d:"+Finesse and +Deftness as you fill the trunk", trunk:true},
+          {at:10, t:"Sub-spec unlocked", d:"opens Mulching and Cultivation branches", trunk:true},
+          {at:40, t:"Mounted Gathering", d:"gather herbs without dismounting — doubles route speed", trunk:true, key:true},
+          {at:20, t:"Mulching · Imbued Mulch", d:"10 Tranquility Bloom → mulch that guarantees a Nocturnal Lotus on your next pick", branch:"Mulching"},
+          {at:30, t:"Mulching · Magical Mulch", d:"guaranteed Finesse proc on next gather", branch:"Mulching"},
+          {at:20, t:"Cultivation · Seeds", d:"plant seeds on river soil for instant herbs", branch:"Cultivation"},
+          {at:30, t:"Cultivation · Empowered Mulch", d:"guaranteed max-rank (Gold) herb on next pick", branch:"Cultivation"},
+        ],
         note:"the 40-point payoff (mounted gathering) is the value; the trickle of Finesse is a bonus, not the reason." },
       { key:"bountiful", name:"Bountiful Harvests", color:C.ochreDeep, max:40,
         gist:"pure yield. +1 minimum and +1 maximum herb per node at 40, plus skill for gold-quality.",
         milestones:[[20,"per-herb sub-spec: ~15–20% Finesse proc for bonus herbs"],[40,"+1 min & +1 max yield per gather · extra skill on all herbs"]],
-        per:"yield", perRate:0.025, // +1 min/+1 max ≈ modeled as +0.05 herb/gather at 40 → ~0.025/pt avg shown as yield index
+        per:"yield", perRate:0.025,
+        nodes:[
+          {at:1, t:"Bountiful (root)", d:"+yield and +herb skill (more Gold-quality) as you fill it", trunk:true},
+          {at:40, t:"+1 Min & +1 Max Yield", d:"every node gives at least one more herb, often two", trunk:true, key:true},
+          {at:20, t:"Tranquility Bloom focus", d:"~15-20% Finesse proc + skill for this herb · +Lotus rate at 40", branch:"per-herb"},
+          {at:20, t:"Sanguithorn focus", d:"~15-20% Finesse proc + skill for this herb", branch:"per-herb"},
+          {at:20, t:"Mana Lily focus", d:"~15-20% Finesse proc + skill for this herb", branch:"per-herb"},
+          {at:20, t:"Argentleaf focus", d:"~15-20% Finesse proc + skill for this herb", branch:"per-herb"},
+        ],
         note:"the strongest gold tree once you can gather mounted. target the herb selling highest on your realm." },
       { key:"overload", name:"Midnight Overload", color:C.plum, max:40,
         gist:"infused-node farming. a second Overload charge at 40. only matters if you chase elemental nodes.",
         milestones:[[1,"root: passive Overload cooldown reduction (free)"],[40,"second Overload charge · Lightfused & Voidbound double their motes"]],
         per:"motes", perRate:0.6,
+        nodes:[
+          {at:1, t:"Overload (root)", d:"passive Overload cooldown reduction — free to grab", trunk:true},
+          {at:40, t:"Second Overload Charge", d:"double-dip infused nodes for twice the motes", trunk:true, key:true},
+          {at:15, t:"Voidbound", d:"more Mote of Pure Void from Voidstorm nodes", branch:"elemental"},
+          {at:15, t:"Wild", d:"more Mote of Wild Magic from Zul'Aman nodes", branch:"elemental"},
+          {at:15, t:"Lightfused", d:"more Mote of Light from Eversong nodes", branch:"elemental"},
+          {at:15, t:"Primal", d:"more Mote of Primal Energy from Harandar nodes", branch:"elemental"},
+        ],
         note:"heavy point cost for a benefit that only applies to rare infused nodes — last priority for most." },
     ],
   },
@@ -477,16 +505,37 @@ const SPEC_TREES = {
         gist:"the flask tree. the base Thalassian flask is taught here; crafting it 10× reveals the other three.",
         milestones:[[1,"learn Flask of Thalassian Resistance (the base flask)"],[30,"Cauldron of Sin'dorei Flasks (raid cauldron · warbound)"],[50,"full flask mastery · best Multicraft on flasks"]],
         per:"Multicraft", perRate:0.5,
+        nodes:[
+          {at:1, t:"Flask of Thalassian Resistance", d:"the base flask · craft it 10× to reveal the other three", trunk:true},
+          {at:5, t:"Personal flask duration ×2", d:"your own flasks last twice as long", trunk:true},
+          {at:15, t:"Party/raid flask duration ×2", d:"doubles flask duration for the whole group — huge raid value", trunk:true, key:true},
+          {at:30, t:"Cauldron of Sin'dorei Flasks", d:"one craft, flasks for the whole raid (warbound)", trunk:true},
+          {at:50, t:"Full flask mastery", d:"best Multicraft on flasks — most free extra flasks", trunk:true, key:true},
+          {at:20, t:"Recycle · Resourcefulness", d:"cuts flask & phial material cost", branch:"thrift"},
+        ],
         note:"flasks are the flagship sellers. 30 KP here unlocks the cauldron, though the cauldron itself is bound." },
       { key:"potions", name:"Potion Prowess", color:C.ink2, max:50,
         gist:"the potion tree. Light and Void potions, the bulk-volume sellers.",
         milestones:[[1,"improved potion yields"],[30,"Voidlight Potion Cauldron (bound utility)"],[50,"full potion mastery · best Multicraft on potions"]],
         per:"Multicraft", perRate:0.5,
+        nodes:[
+          {at:1, t:"Potion yields up", d:"more potions per craft from the start", trunk:true},
+          {at:15, t:"Prolific Potioneer", d:"Multicraft nodes begin — free extra potions", trunk:true},
+          {at:30, t:"Voidlight Potion Cauldron", d:"group potion cauldron (bound utility)", trunk:true},
+          {at:50, t:"Full potion mastery", d:"best Multicraft on potions — bulk seller's dream", trunk:true, key:true},
+          {at:20, t:"Light potion sub-spec", d:"extra yield & quality on Light's Potential and kin", branch:"split"},
+          {at:20, t:"Void potion sub-spec", d:"extra yield & quality on Void potions", branch:"split"},
+        ],
         note:"Light's Potential is the steady bulk earner. potions carry the day-to-day coin between flask rushes." },
       { key:"transmute", name:"Transmutation Authority", color:C.verdigris, max:40,
         gist:"transmutes & reagents. turns motes into more motes, feeds cauldrons and other crafters.",
         milestones:[[1,"mote transmutes (18h shared cooldown)"],[40,"Wondrous Synergist & cross-profession reagents · best Multicraft on transmutes"]],
         per:"Multicraft", perRate:0.4,
+        nodes:[
+          {at:1, t:"Mote transmutes", d:"convert 10 of one mote into 8 of another (18h shared CD)", trunk:true},
+          {at:30, t:"Magister's Alchemist Stone", d:"epic embellishment that boosts your potion effects", trunk:true},
+          {at:40, t:"Wondrous Synergist + Multicraft", d:"daily reagent for other crafters · free extra motes on transmute", trunk:true, key:true},
+        ],
         note:"Multicraft here means free extra motes on transmute. value depends on mote prices — watch the market." },
     ],
   },
@@ -697,7 +746,7 @@ function Overview({ price, loading, live, go }){
           <Vial kind={r.item.kind} color={C.ochre} size={24}/>
           <div style={{flex:1, minWidth:0}}>
             <div style={{fontFamily:DISPLAY, fontSize:14.5, color:C.ink, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis"}}>{r.item.name}</div>
-            <div style={{fontFamily:DISPLAY, fontSize:10.5, fontStyle:"italic", color:C.inkFaint, display:"flex", gap:10, alignItems:"center"}}>{loading?"":<><span><QSilver size={11}/> {r.saleSilver==null?"—":fmtG(r.saleSilver)+"g"}</span>{r.saleGold!=null&&<span><QGold size={12}/> {fmtG(r.saleGold)}g</span>}</>}</div>
+            <div style={{fontFamily:DISPLAY, fontSize:10.5, fontStyle:"italic", color:C.inkFaint, display:"flex", gap:10, alignItems:"center"}}>{loading?"":<>{r.saleGold!=null&&<span><QGold size={12}/> {fmtG(r.saleGold)}g</span>}<span><QSilver size={11}/> {r.saleSilver==null?"—":fmtG(r.saleSilver)+"g"}</span></>}</div>
           </div>
           <div style={{textAlign:"right", flexShrink:0}}>
             <div style={{fontFamily:DISPLAY, fontSize:16, color:r.marginGathered>0?C.ochreDeep:C.sanguine}}>{loading?"…":fmtG(r.marginGathered)}<span style={{fontSize:10, fontStyle:"italic"}}> g</span></div>
@@ -742,29 +791,29 @@ function OverviewRight({ go }){
 
 /* ── SPECIMENS → a clickable herb-price gallery (drawings made functional) ── */
 function SpecLeft({ price, loading, go }){
+  // richest herb by live (or est) price, computed not hardcoded
+  const richest=[...HERBS].map(h=>({id:h.id, p: price?(price(h.id)??h.est??0):(h.est??0)})).sort((a,b)=>b.p-a.p)[0];
   return <div style={pad}>
     <Eyebrow>the herb gallery</Eyebrow>
     <Title size={26}>What the soil gives up</Title>
-    <p style={{fontFamily:BODY, fontSize:13.5, lineHeight:1.75, color:C.inkSoft, margin:0}}>
+    <p style={{fontFamily:BODY, fontSize:13.5, lineHeight:1.75, color:C.inkSoft, margin:"0 0 14px"}}>
       Every leaf here i pressed and drew myself, by lamplight. Beside each i keep its going rate, so a tired night never tempts me to sell the rare ones cheap. Tap any leaf to weigh it against the rest on the gathering page.
     </p>
-    <Hand size={15} style={{marginTop:18}}>the rare one pays for the whole night. know it on sight.</Hand>
-    <div style={{marginTop:"auto", paddingTop:16}}>
-      <div style={{fontFamily:DISPLAY, fontSize:11, fontStyle:"italic", color:C.inkFaint, marginBottom:6}}>tonight's richest leaf</div>
-      <SpecMount id={236780} price={price} loading={loading} go={go} mini/>
-    </div>
+    <div style={{fontFamily:DISPLAY, fontSize:11, letterSpacing:1, textTransform:"uppercase", color:C.inkFaint, marginBottom:8}}>tonight's richest leaf</div>
+    <SpecMount id={richest.id} price={price} loading={loading} go={go} feature/>
+    <Hand size={14.5} style={{marginTop:16}}>the rare one pays for the whole night. know it on sight.</Hand>
   </div>;
 }
 function SpecRight({ price, loading, go }){
-  // sorted by live price, richest first
-  const order=[236780,236770,236776,236778,236774,236761]
-    .map(id=>({id, p: price ? (price(id) ?? (HERB(id)?.est) ?? 0) : 0}))
-    .sort((a,b)=>b.p-a.p).map(x=>x.id);
+  // richest first, and DROP the one featured on the left page (no repeat)
+  const sorted=[...HERBS].map(h=>({id:h.id, p: price?(price(h.id)??h.est??0):(h.est??0)})).sort((a,b)=>b.p-a.p);
+  const featured=sorted[0]?.id;
+  const order=sorted.slice(1).map(x=>x.id); // skip the featured leaf
   return <div style={pad}>
-    <div style={{display:"flex", justifyContent:"space-between", alignItems:"baseline", marginBottom:6}}>
-      <Eyebrow>by what they fetch</Eyebrow><Hand size={13} color={C.green} tilt={0}>richest first</Hand>
+    <div style={{display:"flex", justifyContent:"space-between", alignItems:"baseline", marginBottom:8}}>
+      <Eyebrow>the rest of the pressing</Eyebrow><Hand size={13} color={C.green} tilt={0}>richest first</Hand>
     </div>
-    <div style={{overflowY:"auto"}}>{order.map(id=><SpecMount key={id} id={id} price={price} loading={loading} go={go}/>)}</div>
+    <div style={{overflowY:"auto", flex:1}}>{order.map(id=><SpecMount key={id} id={id} price={price} loading={loading} go={go}/>)}</div>
   </div>;
 }
 const HERB_HAND = {
@@ -775,19 +824,26 @@ const HERB_HAND = {
   236770:"it drew blood again. the red sap stains the page.",
   236780:"one in a whole season. never, ever sell it cheap.",
 };
-function SpecMount({ id, mini, price, loading, go }){
+function SpecMount({ id, mini, feature, price, loading, go }){
   const h=HERB(id);
-  const p = price ? (price(id) ?? h.est ?? null) : null;
-  return <div onClick={()=>go&&go("worth")} style={{position:"relative", padding:"6px 4px 12px", marginBottom:mini?0:2, cursor:go?"pointer":"default", borderBottom:mini?"none":"1px solid "+C.ruleSoft}}>
-    <Tape w={48} rot={-7} style={{top:-5, left:14}}/>{!mini&&<Tape w={48} rot={6} style={{top:-5, right:14}}/>}
+  const pa = price ? (price(h.id) ?? null) : null;
+  const pb = (price && h.gid) ? (price(h.gid) ?? null) : null;
+  const both=[pa,pb].filter(v=>v!=null);
+  const gold = both.length?Math.max(...both):(h.est??null);
+  const silver = both.length>1?Math.min(...both):(both.length?both[0]:(h.est??null));
+  const sz = feature?86:80;
+  return <div onClick={()=>go&&go("worth")} style={{position:"relative", padding:"6px 4px 12px", marginBottom:feature?0:2, cursor:go?"pointer":"default", borderBottom:feature?"none":"1px solid "+C.ruleSoft}}>
+    <Tape w={48} rot={-7} style={{top:-5, left:14}}/>{!feature&&<Tape w={48} rot={6} style={{top:-5, right:14}}/>}
     <div style={{display:"flex", gap:12, alignItems:"flex-start"}}>
-      <div style={{flexShrink:0}}><Pressed id={id} size={mini?72:80}/></div>
+      <div style={{flexShrink:0}}><Pressed id={id} size={sz}/></div>
       <div style={{flex:1, paddingTop:4}}>
-        <div style={{display:"flex", justifyContent:"space-between", alignItems:"baseline", gap:8}}>
-          <h3 style={{fontFamily:DISPLAY, fontSize:17, fontWeight:400, margin:0, color:C.ink, fontStyle:"italic"}}>{h.name}</h3>
-          <span style={{fontFamily:DISPLAY, fontSize:17, color:C.sanguine}}>{loading?"…":(p==null?<span style={{fontSize:12, fontStyle:"italic", color:C.inkFaint}}>not sold</span>:<>{fmtG(p)}<span style={{fontSize:11, fontStyle:"italic"}}> g</span></>)}</span>
+        <h3 style={{fontFamily:DISPLAY, fontSize:17, fontWeight:400, margin:0, color:C.ink, fontStyle:"italic"}}>{h.name}</h3>
+        <div style={{fontFamily:DISPLAY, fontSize:11.5, fontStyle:"italic", color:C.inkFaint, marginBottom:5}}>{h.latin} · № {h.no}</div>
+        {/* gold first, then silver */}
+        <div style={{display:"flex", gap:14, alignItems:"center"}}>
+          <span style={{display:"inline-flex", alignItems:"center", gap:5, fontFamily:DISPLAY}}><QGold/> <span style={{color:C.ochreDeep, fontSize:15}}>{loading?"…":(gold==null?<span style={{fontSize:11, fontStyle:"italic", color:C.inkFaint}}>—</span>:fmtG(gold)+"g")}</span></span>
+          <span style={{display:"inline-flex", alignItems:"center", gap:5, fontFamily:DISPLAY}}><QSilver/> <span style={{color:C.ink2, fontSize:15}}>{loading?"…":(silver==null?<span style={{fontSize:11, fontStyle:"italic", color:C.inkFaint}}>not listed</span>:fmtG(silver)+"g")}</span></span>
         </div>
-        <div style={{fontFamily:DISPLAY, fontSize:12, fontStyle:"italic", color:C.inkFaint}}>{h.latin} · № {h.no}</div>
         <Hand size={13} style={{marginTop:5}}>{HERB_HAND[id]}</Hand>
       </div>
     </div>
@@ -817,12 +873,12 @@ function Worth({ price, loading, live }){
             <div style={{fontFamily:DISPLAY, fontSize:15.5, color:C.ink}}>{r.item.name}</div>
             {side==="herb"
               ? <div style={{fontFamily:DISPLAY, fontSize:12.5, color:C.inkFaint, display:"flex", gap:14, alignItems:"center"}}>
-                  <span><QSilver/> <span style={{color:C.sanguine, fontSize:15}}>{r.saleSilver==null?"—":fmtG(r.saleSilver)+"g"}</span></span>
                   <span><QGold/> {r.saleGold==null?<span style={{fontStyle:"italic", fontSize:11}}>not listed</span>:<span style={{color:C.ochreDeep, fontSize:15}}>{fmtG(r.saleGold)}g</span>}</span>
+                  <span><QSilver/> <span style={{color:C.ink2, fontSize:15}}>{r.saleSilver==null?"—":fmtG(r.saleSilver)+"g"}</span></span>
                 </div>
               : <div style={{fontFamily:DISPLAY, fontSize:12.5, color:C.inkFaint, display:"flex", gap:14, alignItems:"center"}}>
-                  <span><QSilver/> <span style={{color:C.sanguine, fontSize:15}}>{r.saleSilver==null?"—":fmtG(r.saleSilver)+"g"}</span></span>
                   <span><QGold/> {r.saleGold==null?<span style={{fontStyle:"italic", fontSize:11}}>not listed</span>:<span style={{color:C.ochreDeep, fontSize:15}}>{fmtG(r.saleGold)}g</span>}</span>
+                  <span><QSilver/> <span style={{color:C.ink2, fontSize:15}}>{r.saleSilver==null?"—":fmtG(r.saleSilver)+"g"}</span></span>
                 </div>}
           </div>
         </div>
@@ -1095,16 +1151,20 @@ function SpecPlanner({ build, setBuild }){
       <div style={{fontFamily:DISPLAY, fontSize:10, fontStyle:"italic", color:C.inkFaint, marginTop:4}}>relative payoff index — milestones are exact, per-point rates are estimates</div>
     </div>
 
-    {/* allocators */}
+    {/* ── the visual trees: each branch a connected trunk with sub-branches ── */}
     <div style={{overflowY:"auto"}}>
       {T.branches.map(br=>{
         const pts=b[br.key]||0;
-        return <div key={br.key} style={{padding:"10px 0", borderBottom:"1px solid "+C.ruleSoft}}>
-          <div style={{display:"flex", alignItems:"center", gap:10}}>
-            <span style={{width:9, height:9, borderRadius:2, background:br.color, flexShrink:0}}/>
+        const trunk=(br.nodes||[]).filter(n=>n.trunk).sort((a,c)=>a.at-c.at);
+        const subs={};
+        (br.nodes||[]).filter(n=>!n.trunk).forEach(n=>{ (subs[n.branch]=subs[n.branch]||[]).push(n); });
+        return <div key={br.key} style={{padding:"4px 0 16px", borderBottom:"1px solid "+C.ruleSoft, marginBottom:8}}>
+          {/* branch header + stepper */}
+          <div style={{display:"flex", alignItems:"center", gap:10, marginBottom:10}}>
+            <span style={{width:11, height:11, borderRadius:2, background:br.color, flexShrink:0}}/>
             <div style={{flex:1}}>
-              <div style={{fontFamily:DISPLAY, fontSize:15.5, color:C.ink}}>{br.name}</div>
-              <div style={{fontFamily:DISPLAY, fontSize:11.5, fontStyle:"italic", color:C.inkFaint}}>{br.gist}</div>
+              <div style={{fontFamily:DISPLAY, fontSize:16, color:C.ink}}>{br.name}</div>
+              <div style={{fontFamily:DISPLAY, fontSize:11, fontStyle:"italic", color:C.inkFaint}}>{br.gist}</div>
             </div>
             <div style={{display:"flex", alignItems:"center", gap:8, flexShrink:0}}>
               <button onClick={()=>set(br.key,pts-5,br.max)} style={stepBtn}>–</button>
@@ -1112,16 +1172,46 @@ function SpecPlanner({ build, setBuild }){
               <button onClick={()=>set(br.key,pts+5,br.max)} style={stepBtn}>+</button>
             </div>
           </div>
-          {/* milestone ticks */}
-          <div style={{display:"flex", gap:10, marginTop:7, flexWrap:"wrap", paddingLeft:19}}>
-            {br.milestones.map(([at,desc],i)=>{const hit=pts>=at;
-              return <span key={i} style={{display:"inline-flex", alignItems:"center", gap:5, fontFamily:DISPLAY, fontSize:11, color:hit?br.color:C.inkFaint, opacity:hit?1:0.7}}>
-                <span style={{width:13, height:13, borderRadius:"50%", border:"1.5px solid "+(hit?br.color:C.rule), background:hit?br.color:"transparent", flexShrink:0}}/>
-                <b style={{fontWeight:hit?700:400}}>{at}</b> {desc}
-              </span>;
+
+          {/* TRUNK: vertical line of key nodes */}
+          <div style={{position:"relative", paddingLeft:30}}>
+            {/* the connecting spine */}
+            <div style={{position:"absolute", left:13, top:10, bottom:10, width:2, background:C.ruleSoft}}/>
+            <div style={{position:"absolute", left:13, top:10, width:2, background:br.color, height:`calc(${Math.min(100,(pts/br.max)*100)}% - 0px)`, transition:"height .3s", maxHeight:"calc(100% - 20px)"}}/>
+            {trunk.map((n,i)=>{const hit=pts>=n.at;
+              return <div key={i} style={{position:"relative", display:"flex", gap:11, alignItems:"flex-start", padding:"6px 0"}}>
+                <span style={{position:"absolute", left:-23, top:7, width:n.key?17:13, height:n.key?17:13,
+                  borderRadius:n.key?3:"50%", transform:n.key?"rotate(45deg)":"none",
+                  border:"2px solid "+(hit?br.color:C.rule), background:hit?br.color:C.paper,
+                  boxShadow:hit&&n.key?"0 0 8px "+br.color:"none", flexShrink:0, transition:"all .2s"}}/>
+                <span style={{fontFamily:DISPLAY, fontSize:12, fontWeight:700, color:hit?br.color:C.inkFaint, minWidth:22}}>{n.at}</span>
+                <div style={{flex:1, opacity:hit?1:0.62}}>
+                  <div style={{fontFamily:DISPLAY, fontSize:13.5, color:C.ink, fontStyle:n.key?"normal":"normal", fontWeight:n.key?700:400}}>{n.t}</div>
+                  <div style={{fontFamily:DISPLAY, fontSize:11.5, fontStyle:"italic", color:C.inkSoft, lineHeight:1.4}}>{n.d}</div>
+                </div>
+              </div>;
             })}
           </div>
-          {pts>0 && <div style={{fontFamily:HAND, fontSize:12.5, color:C.greenDk, transform:"rotate(-0.3deg)", marginTop:6, paddingLeft:19}}>{br.note}</div>}
+
+          {/* SUB-BRANCHES: each splits off with its own little line */}
+          {Object.keys(subs).map(sb=>(
+            <div key={sb} style={{marginTop:8, marginLeft:30, paddingLeft:14, borderLeft:"2px dashed "+C.ruleSoft}}>
+              <div style={{fontFamily:DISPLAY, fontSize:10.5, letterSpacing:1, textTransform:"uppercase", color:C.inkFaint, marginBottom:4}}>{sb}</div>
+              <div style={{display:"flex", flexWrap:"wrap", gap:"4px 14px"}}>
+                {subs[sb].map((n,i)=>{const hit=pts>=n.at;
+                  return <div key={i} style={{display:"flex", gap:7, alignItems:"flex-start", opacity:hit?1:0.6, flex:"1 1 44%", minWidth:140, padding:"3px 0"}}>
+                    <span style={{width:10, height:10, borderRadius:"50%", border:"1.5px solid "+(hit?br.color:C.rule), background:hit?br.color:"transparent", flexShrink:0, marginTop:4}}/>
+                    <div>
+                      <div style={{fontFamily:DISPLAY, fontSize:12.5, color:C.ink}}><b style={{color:hit?br.color:C.inkFaint}}>{n.at}</b> · {n.t}</div>
+                      <div style={{fontFamily:DISPLAY, fontSize:11, fontStyle:"italic", color:C.inkSoft, lineHeight:1.35}}>{n.d}</div>
+                    </div>
+                  </div>;
+                })}
+              </div>
+            </div>
+          ))}
+
+          {pts>0 && <div style={{fontFamily:HAND, fontSize:12.5, color:C.greenDk, transform:"rotate(-0.3deg)", marginTop:10, marginLeft:30}}>{br.note}</div>}
         </div>;
       })}
     </div>
@@ -1132,14 +1222,14 @@ const stepBtn={ width:28, height:28, borderRadius:"50%", border:"1px solid "+C.r
 
 /* ── the ribboned sections of the book ── */
 const SECTIONS = [
-  { key:"overview",  ribbon:"#9c4a3c", title:"the night's plan",  voice:true },
-  { key:"specimens", ribbon:"#6b7d4e", title:"the herb gallery", voice:true },
-  { key:"worth",     ribbon:"#c19a45", title:"what's worth it",    voice:true },
-  { key:"knowing",   ribbon:"#46627a", title:"what i've come to know", voice:true },
-  { key:"planner",   ribbon:"#b06a86", title:"the spec planner",   voice:false },
-  { key:"formulary", ribbon:"#7d6a9c", title:"the formulary",      voice:false },
-  { key:"scale",     ribbon:"#9a7833", title:"the scale & bench",  voice:false },
-  { key:"maps",      ribbon:"#5a7d5e", title:"the four grounds",   voice:false },
+  { key:"overview",  ribbon:"#9c4a3c", title:"the night's plan",  sub:"top sellers tonight, at a glance", voice:true },
+  { key:"specimens", ribbon:"#6b7d4e", title:"the herb gallery", sub:"every herb and what it sells for", voice:true },
+  { key:"worth",     ribbon:"#c19a45", title:"what's worth it",    sub:"full ranking · herbs & crafts by price", voice:true },
+  { key:"knowing",   ribbon:"#46627a", title:"what i've come to know", sub:"tips, lore & gold-making notes", voice:true },
+  { key:"planner",   ribbon:"#b06a86", title:"the spec planner",   sub:"plan your talent trees point by point", voice:false },
+  { key:"formulary", ribbon:"#7d6a9c", title:"the formulary",      sub:"every recipe, mats & where to learn it", voice:false },
+  { key:"scale",     ribbon:"#9a7833", title:"the scale & bench",  sub:"profit calculator & multicraft odds", voice:false },
+  { key:"maps",      ribbon:"#5a7d5e", title:"the four grounds",   sub:"farming routes & treasure waypoints", voice:false },
 ];
 
 /* index page (front of book) */
@@ -1268,6 +1358,9 @@ export default function App(){
 
         {/* spread */}
         <div style={{position:"absolute", inset: mobile?0:6, top: mobile?62:10, display:"flex", borderRadius: mobile?0:3, overflow:"hidden", boxShadow:"0 8px 24px rgba(0,0,0,0.4)"}}>
+          {/* visible page-stack thickness along the outer edges (desktop book feel) */}
+          {!mobile && <div style={{position:"absolute", left:-4, top:6, bottom:6, width:5, borderRadius:"2px 0 0 2px", background:"repeating-linear-gradient(90deg, #e8dcc0, #d8c9a4 1.5px, #cbb894 3px)", boxShadow:"-2px 0 6px rgba(0,0,0,0.3)", zIndex:1}}/>}
+          {!mobile && <div style={{position:"absolute", right:-4, top:6, bottom:6, width:5, borderRadius:"0 2px 2px 0", background:"repeating-linear-gradient(90deg, #cbb894, #d8c9a4 1.5px, #e8dcc0 3px)", boxShadow:"2px 0 6px rgba(0,0,0,0.3)", zIndex:1}}/>}
           {!mobile && !single && (
             <div style={{...leafBase, borderRight:"1px solid "+C.rule, background:"radial-gradient(130% 100% at 85% 50%, "+C.paperHi+", "+C.paperLo+" 92%, "+C.paperDeep+")"}}>
               <GhostWriting/>
@@ -1287,7 +1380,14 @@ export default function App(){
               {turning && <div style={{position:"absolute", inset:0, background:"linear-gradient(90deg, rgba(0,0,0,0.16), transparent 45%)", pointerEvents:"none"}}/>}
             </div>
           </div>
+          {/* center spine: the dark valley where two pages meet in an open book */}
+          {!mobile && !single && <div style={{position:"absolute", left:"50%", top:0, bottom:0, width:34, transform:"translateX(-50%)", pointerEvents:"none", zIndex:4,
+            background:"linear-gradient(90deg, rgba(58,42,28,0) 0%, rgba(58,42,28,0.16) 38%, rgba(40,28,16,0.34) 50%, rgba(58,42,28,0.16) 62%, rgba(58,42,28,0) 100%)"}}/>}
         </div>
+
+        {/* a soft page-curl highlight near the spine on each page, sells the curve */}
+        {!mobile && !single && <div style={{position:"absolute", left:"50%", top:16, bottom:16, width:60, transform:"translateX(-50%)", pointerEvents:"none", zIndex:5,
+          background:"linear-gradient(90deg, transparent, rgba(255,250,235,0.18) 44%, transparent 50%, rgba(255,250,235,0.18) 56%, transparent)"}}/>}
 
         {tableScene && <div style={{position:"absolute", inset:0, pointerEvents:"none", borderRadius:3, background:"radial-gradient(80% 70% at 50% 30%, rgba(248,242,224,0.14), transparent 72%)", zIndex:8, mixBlendMode:"soft-light"}}/>}
       </div>
@@ -1317,10 +1417,13 @@ export default function App(){
           </div>
           {SECTIONS.map(sec=>{const on=sec.key===section;
             return <div key={sec.key} onClick={()=>{turnTo(sec.key); setNavOpen(false);}} style={navRow(on)}>
-              <span style={{width:11, height:11, borderRadius:2, background:sec.ribbon, flexShrink:0}}/>
-              <span style={{flex:1, fontFamily:DISPLAY, fontSize:15, color:C.ink}}>{sec.title}</span>
-              {!sec.voice && <span style={{fontFamily:DISPLAY, fontSize:10, fontStyle:"italic", color:C.inkFaint}}>tool</span>}
-              {on && <span style={{fontFamily:DISPLAY, fontSize:11, fontStyle:"italic", color:C.sanguine}}>here</span>}
+              <span style={{width:11, height:11, borderRadius:2, background:sec.ribbon, flexShrink:0, marginTop:3}}/>
+              <div style={{flex:1}}>
+                <div style={{fontFamily:DISPLAY, fontSize:15, color:C.ink}}>{sec.title}</div>
+                <div style={{fontFamily:DISPLAY, fontSize:11, fontStyle:"italic", color:C.inkFaint}}>{sec.sub}</div>
+              </div>
+              {!sec.voice && <span style={{fontFamily:DISPLAY, fontSize:10, fontStyle:"italic", color:C.inkFaint, marginTop:3}}>tool</span>}
+              {on && <span style={{fontFamily:DISPLAY, fontSize:11, fontStyle:"italic", color:C.sanguine, marginTop:3}}>here</span>}
             </div>;
           })}
         </div>
