@@ -8,7 +8,7 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from "react"
    ════════════════════════════════════════════════════════════════ */
 
 const CONFIG = {
-  ue:   { enabled: false, base: "https://api.undermine.exchange", region: "us", realm: "moon-guard", apiKey: "" },
+  ue:   { enabled: true, base: "https://api.undermine.exchange", region: "us", realm: "moon-guard", apiKey: "" },
   bnet: { enabled: false, clientId: "", redirectUri: "", region: "us", realm: "moon-guard", character: "gilshi" },
 };
 
@@ -387,13 +387,18 @@ const ZONES = [
 const DEFAULT_CHAR = { name:"Gilshi", realm:"Moon Guard", faction:"Alliance", race:"Pandaren", class:"Death Knight", herbSkill:100, herbMax:100, alchSkill:100, alchMax:100, herbKP:0, alchKP:0 };
 
 async function fetchPrices(realm){
-  const all=[...HERBS,...PRODUCTS]; const list=all.map(i=>`${i.name} (id ${i.id})`).join(", ");
-  const prompt=`WoW Midnight (12.0.5) auction prices for ${realm} Alliance, medium-pop US RP realm. Items: ${list}. Return ONLY JSON mapping item id (string) to gold price (number), mid-expansion RP economy. No prose.`;
+  // Calls our own serverless proxy (/api/prices), which talks to Undermine
+  // Exchange server-side. Returns { itemId: goldPrice } for whatever UE has;
+  // missing ids fall back to each item's labeled estimate in the app.
+  const ids=[...HERBS,...PRODUCTS].map(i=>i.id).join(",");
+  const region=CONFIG.ue.region||"us";
   try{
-    const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:1024,messages:[{role:"user",content:prompt}]})});
-    const d=await r.json(); const t=d.content?.find(b=>b.type==="text")?.text||"{}";
-    return JSON.parse(t.replace(/```json|```/g,"").trim());
+    const r=await fetch("/api/prices?region="+region+"&realm="+encodeURIComponent(realm)+"&ids="+ids);
+    if(!r.ok) return null;
+    const d=await r.json();
+    // normalize keys to strings so price(id) lookups match
+    const out={}; for(const k in d){ if(d[k]!=null) out[String(k)]=d[k]; }
+    return out;
   }catch{return null;}
 }
 const fmtG = n => n==null?"—":n>=1000?`${(n/1000).toFixed(1)}k`:Math.round(n).toLocaleString();
