@@ -1,14 +1,14 @@
 // Serverless proxy -> Undermine Exchange (key hidden server-side, no CORS).
 // Key lives ONLY in Vercel env var UE_API_KEY.
 //
-// WoW herbs/flasks/potions are COMMODITIES. UE's free per-item "now" endpoints
-// are non-commodity only. The free, region-wide, commodity-correct endpoint is
-// Daily Item Detail:  /v1/region/:region/items/:itemId/daily.json
-//   -> { result: { daily: [ {day, price, quantity}, ... ] } }   (copper)
-// We take the most recent day's price.
+// THE KEY INSIGHT: herbs/flasks/potions are COMMODITIES and live on a SEPARATE
+// part of UE's API from regular items. One free call returns ALL of them:
+//   /v1/region/:region/commodities.json
+//   -> { result: { commodities: { "236761": {item, price, quantity}, ... } } }
+// price is in copper. We pull every requested id out of that single response.
+// For anything not a commodity, we fall back to the non-commodity item "now".
 //
-// Hardened: every item is wrapped so one bad response cannot crash the whole
-// function. &debug=1 returns a trace incl. any per-item errors.
+// Fully hardened: cannot crash; &debug=1 returns a trace.
 
 const UE_BASE = "https://api.undermine.exchange";
 const toGold = (c) => (typeof c === "number" && isFinite(c) ? c / 10000 : null);
@@ -28,40 +28,54 @@ export default async function handler(req, res) {
     const out = {};
     const trace = [];
 
-    async function fetchOne(id) {
-      const path = "/v1/region/" + region + "/items/" + id + "/daily.json";
-      try {
-        const r = await fetch(UE_BASE + path, { headers });
-        const status = r.status;
-        if (!r.ok) { if (debug) trace.push({ id, status }); return; }
-        let d = null;
-        try { d = await r.json(); } catch (e) { if (debug) trace.push({ id, status, parse: "bad json" }); return; }
-        const days = d && d.result && Array.isArray(d.result.daily) ? d.result.daily : null;
-        if (!days || !days.length) { if (debug) trace.push({ id, status, note: "no daily array" }); return; }
-        for (let i = days.length - 1; i >= 0; i--) {
-          const row = days[i];
-          if (row && row.price != null) {
+    // 1) ONE call gets every commodity price for the region
+    try {
+      const url = UE_BASE + "/v1/region/" + region + "/commodities.json";
+      const r = await fetch(url, { headers });
+      if (debug) trace.push({ step: "commodities", status: r.status });
+      if (r.ok) {
+        const d = await r.json();
+        const comm = d && d.result && d.result.commodities ? d.result.commodities : {};
+        for (const id of ids) {
+          const row = comm[id];
+          if (row && row.price != null && (row.quantity == null || row.quantity > 0)) {
             const g = toGold(row.price);
-            if (g != null) { out[id] = g; if (debug) trace.push({ id, status, gotGold: g, day: row.day }); }
-            return;
+            if (g != null) out[id] = g;
           }
         }
-        if (debug) trace.push({ id, status, note: "no priced day" });
-      } catch (e) {
-        if (debug) trace.push({ id, error: String((e && e.message) || e).slice(0, 140) });
+        if (debug) trace.push({ step: "commodities", matched: Object.keys(out).length });
       }
+    } catch (e) {
+      if (debug) trace.push({ step: "commodities", error: String((e && e.message) || e).slice(0, 140) });
     }
 
+    // 2) fallback: non-commodity items (e.g. a bound-on-equip reagent) via "now"
+    const missing = ids.filter((id) => out[id] == null);
+    async function fetchItem(id) {
+      const path = "/v1/region/" + region + "/items/" + id + "/now.json";
+      try {
+        const r = await fetch(UE_BASE + path, { headers });
+        if (debug) trace.push({ id, itemStatus: r.status });
+        if (!r.ok) return;
+        const d = await r.json();
+        const arr = d && Array.isArray(d.result) ? d.result : null;
+        if (arr && arr.length) {
+          let best = null;
+          for (const row of arr) if (row && row.price != null) best = best == null ? row.price : Math.min(best, row.price);
+          const g = toGold(best);
+          if (g != null) out[id] = g;
+        }
+      } catch (e) { if (debug) trace.push({ id, itemError: String((e && e.message) || e).slice(0, 120) }); }
+    }
     const BATCH = 5;
-    for (let i = 0; i < ids.length; i += BATCH) {
-      await Promise.all(ids.slice(i, i + BATCH).map(fetchOne));
+    for (let i = 0; i < missing.length; i += BATCH) {
+      await Promise.all(missing.slice(i, i + BATCH).map(fetchItem));
     }
 
     if (debug) return res.status(200).json({ prices: out, trace });
     res.setHeader("Cache-Control", "s-maxage=1800, stale-while-revalidate=3600");
     return res.status(200).json(out);
   } catch (e) {
-    // never crash — report instead
     return res.status(200).json({ error: String((e && e.message) || e).slice(0, 200), prices: {} });
   }
 }
