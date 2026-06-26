@@ -313,9 +313,13 @@ const gradeFor = (rankIdx, total) => {
 // returns herbs sorted by live (or estimated) sale price, velocity as tiebreaker
 function rankHerbs(price){
   const scored = HERBS.map(h=>{
-    const saleSilver = price(h.id) ?? h.est ?? 0;
-    const saleGold = h.gid ? (price(h.gid) ?? null) : null;
-    return { id:h.id, item:h, price:saleSilver, saleSilver, saleGold, vel:h.vel??0, score:saleSilver };
+    const pa = price(h.id) ?? null;
+    const pb = h.gid ? (price(h.gid) ?? null) : null;
+    const both = [pa, pb].filter(v=>v!=null);
+    const saleGold   = both.length ? Math.max(...both) : (h.est ?? null);
+    const saleSilver = both.length>1 ? Math.min(...both) : (both.length ? both[0] : (h.est ?? null));
+    const baseline = saleSilver ?? h.est ?? 0;
+    return { id:h.id, item:h, price:baseline, saleSilver, saleGold, vel:h.vel??0, score:saleGold ?? baseline };
   }).sort((a,b)=> b.score-a.score || b.vel-a.vel );
   return scored.map((s,i)=>({ ...s, rank:i+1, grade:gradeFor(i,scored.length), why:HERB_NOTE[s.id]||s.item.role }));
 }
@@ -323,17 +327,21 @@ function rankHerbs(price){
 // UE's commodity feed returns ONE price per item — the market sell price in gold.
 
 // returns tradeable craftables with BOTH qualities' market prices.
-//   saleSilver = baseline quality price   saleGold = best-materials quality price
-// Ranked by the silver (baseline) price. Gold shown alongside where it exists.
+// We fetch both quality IDs, then label by PRICE: the higher is always Gold,
+// the lower is always Silver. (Never trust which ID is which — let coin decide.)
 function rankCraft(price){
   const sellable = PRODUCTS.filter(p=>p.tradeable);
   const scored = sellable.map(prod=>{
-    const saleSilver = price(prod.id) ?? prod.est ?? 0;
-    const saleGold = prod.gid ? (price(prod.gid) ?? null) : null;
+    const pa = price(prod.id) ?? null;
+    const pb = prod.gid ? (price(prod.gid) ?? null) : null;
+    const both = [pa, pb].filter(v=>v!=null);
+    const saleGold   = both.length ? Math.max(...both) : (prod.est ?? null);
+    const saleSilver = both.length>1 ? Math.min(...both) : (both.length ? both[0] : (prod.est ?? null));
+    const baseline = saleSilver ?? prod.est ?? 0;   // rank by the silver/baseline price
     const herbCost = (prod.mats||[]).reduce((s,m)=>{ const h=HERB(m.h); return s + (h?((price(h.id)??h.est??0)*m.q):0); },0);
-    return { id:prod.id, item:prod, sale:saleSilver, saleSilver, saleGold, herbCost,
-             marginGathered:saleSilver, marginBuy:saleSilver-herbCost, margin:saleSilver,
-             vel:prod.vel??0, score:saleSilver };
+    return { id:prod.id, item:prod, sale:baseline, saleSilver, saleGold, herbCost,
+             marginGathered:baseline, marginBuy:baseline-herbCost, margin:baseline,
+             vel:prod.vel??0, score:saleGold ?? baseline };
   }).sort((a,b)=> b.score-a.score || b.vel-a.vel );
   return scored.map((s,i)=>({ ...s, rank:i+1, grade:gradeFor(i,scored.length), why:ALCH_NOTE[s.id]||s.item.role }));
 }
@@ -410,6 +418,26 @@ async function fetchPrices(realm){
   }catch{return null;}
 }
 const fmtG = n => n==null?"-":n>=1000?`${(n/1000).toFixed(1)}k`:Math.round(n).toLocaleString();
+
+// in-game quality marks: silver diamond (lower), gold glowing pentagon (higher)
+function QSilver({ size=12 }){
+  return <svg width={size} height={size} viewBox="0 0 16 16" style={{display:"inline-block", verticalAlign:"-1px"}} aria-label="silver quality">
+    <defs><linearGradient id="qsil" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#e8edf2"/><stop offset="0.5" stopColor="#b8c2cc"/><stop offset="1" stopColor="#8a96a3"/></linearGradient></defs>
+    <path d="M8 1.5 L14.5 8 L8 14.5 L1.5 8 Z" fill="url(#qsil)" stroke="#6c7682" strokeWidth="1"/>
+    <path d="M8 3.5 L6 7 L8 6 L10 7 Z" fill="#f5f8fb" opacity="0.7"/>
+  </svg>;
+}
+function QGold({ size=13 }){
+  return <svg width={size} height={size} viewBox="0 0 16 16" style={{display:"inline-block", verticalAlign:"-1px"}} aria-label="gold quality">
+    <defs>
+      <radialGradient id="qglow" cx="0.5" cy="0.5" r="0.5"><stop offset="0.5" stopColor="#ffe9a8" stopOpacity="0.9"/><stop offset="1" stopColor="#ffd24d" stopOpacity="0"/></radialGradient>
+      <linearGradient id="qgold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#ffe9a0"/><stop offset="0.5" stopColor="#f4b733"/><stop offset="1" stopColor="#c8841a"/></linearGradient>
+    </defs>
+    <circle cx="8" cy="8" r="8" fill="url(#qglow)"/>
+    <path d="M8 1.6 L14 6 L11.7 13.2 L4.3 13.2 L2 6 Z" fill="url(#qgold)" stroke="#9c6512" strokeWidth="1" strokeLinejoin="round"/>
+    <path d="M8 3.4 L6.5 6.5 L8 5.7 L9.5 6.5 Z" fill="#fff6dc" opacity="0.8"/>
+  </svg>;
+}
 
 /* ════════════════════════════════════════════════════════════════
    ILLUSTRATIONS — the interface is drawn
@@ -669,7 +697,7 @@ function Overview({ price, loading, live, go }){
           <Vial kind={r.item.kind} color={C.ochre} size={24}/>
           <div style={{flex:1, minWidth:0}}>
             <div style={{fontFamily:DISPLAY, fontSize:14.5, color:C.ink, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis"}}>{r.item.name}</div>
-            <div style={{fontFamily:DISPLAY, fontSize:10.5, fontStyle:"italic", color:C.inkFaint}}>{loading?"":<>silver {fmtG(r.saleSilver)}g{r.saleGold!=null?" · gold "+fmtG(r.saleGold)+"g":""}</>}</div>
+            <div style={{fontFamily:DISPLAY, fontSize:10.5, fontStyle:"italic", color:C.inkFaint, display:"flex", gap:10, alignItems:"center"}}>{loading?"":<><span><QSilver size={11}/> {r.saleSilver==null?"—":fmtG(r.saleSilver)+"g"}</span>{r.saleGold!=null&&<span><QGold size={12}/> {fmtG(r.saleGold)}g</span>}</>}</div>
           </div>
           <div style={{textAlign:"right", flexShrink:0}}>
             <div style={{fontFamily:DISPLAY, fontSize:16, color:r.marginGathered>0?C.ochreDeep:C.sanguine}}>{loading?"…":fmtG(r.marginGathered)}<span style={{fontSize:10, fontStyle:"italic"}}> g</span></div>
@@ -788,13 +816,13 @@ function Worth({ price, loading, live }){
           <div style={{flex:1}}>
             <div style={{fontFamily:DISPLAY, fontSize:15.5, color:C.ink}}>{r.item.name}</div>
             {side==="herb"
-              ? <div style={{fontFamily:DISPLAY, fontSize:12.5, color:C.inkFaint}}>
-                  <span>silver <span style={{color:C.sanguine, fontSize:15}}>{r.saleSilver==null?"—":fmtG(r.saleSilver)+"g"}</span></span>
-                  <span> · gold {r.saleGold==null?<span style={{fontStyle:"italic", fontSize:11}}>not listed</span>:<span style={{color:C.ochreDeep, fontSize:15}}>{fmtG(r.saleGold)}g</span>}</span>
+              ? <div style={{fontFamily:DISPLAY, fontSize:12.5, color:C.inkFaint, display:"flex", gap:14, alignItems:"center"}}>
+                  <span><QSilver/> <span style={{color:C.sanguine, fontSize:15}}>{r.saleSilver==null?"—":fmtG(r.saleSilver)+"g"}</span></span>
+                  <span><QGold/> {r.saleGold==null?<span style={{fontStyle:"italic", fontSize:11}}>not listed</span>:<span style={{color:C.ochreDeep, fontSize:15}}>{fmtG(r.saleGold)}g</span>}</span>
                 </div>
-              : <div style={{fontFamily:DISPLAY, fontSize:12.5, color:C.inkFaint}}>
-                  <span>silver <span style={{color:C.sanguine, fontSize:15}}>{r.saleSilver==null?"—":fmtG(r.saleSilver)+"g"}</span></span>
-                  <span> · gold {r.saleGold==null?<span style={{fontStyle:"italic", fontSize:11}}>not listed</span>:<span style={{color:C.ochreDeep, fontSize:15}}>{fmtG(r.saleGold)}g</span>}</span>
+              : <div style={{fontFamily:DISPLAY, fontSize:12.5, color:C.inkFaint, display:"flex", gap:14, alignItems:"center"}}>
+                  <span><QSilver/> <span style={{color:C.sanguine, fontSize:15}}>{r.saleSilver==null?"—":fmtG(r.saleSilver)+"g"}</span></span>
+                  <span><QGold/> {r.saleGold==null?<span style={{fontStyle:"italic", fontSize:11}}>not listed</span>:<span style={{color:C.ochreDeep, fontSize:15}}>{fmtG(r.saleGold)}g</span>}</span>
                 </div>}
           </div>
         </div>
