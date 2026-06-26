@@ -319,27 +319,18 @@ function rankHerbs(price){
   return scored.map((s,i)=>({ ...s, rank:i+1, grade:gradeFor(i,scored.length), why:HERB_NOTE[s.id]||s.item.role }));
 }
 
-// returns tradeable craftables with TWO margins:
-//   marginBuy = sale − all mats (if you bought the herbs)
-//   marginGathered = sale − only the mats you can't gather yourself (herbs free)
-// For a herbalist-alchemist, gathered profit is the real number, so we sort by it.
+// UE's commodity feed returns ONE price per item — the market sell price in gold.
+
+// returns tradeable craftables, ranked by what they sell for on the market.
+//   marginGathered = sale (your herbs are free, so the sell price IS your profit)
+//   marginBuy = sale − herb cost (if you bought the herbs instead)
 function rankCraft(price){
   const sellable = PRODUCTS.filter(p=>p.tradeable);
   const scored = sellable.map(prod=>{
     const sale = price(prod.id) ?? prod.est ?? 0;
-    let matCost = 0, gatherableCost = 0;
-    (prod.mats||[]).forEach(m=>{
-      const h=HERB(m.h);
-      const c = h ? ((price(h.id)??h.est??0)*m.q) : 0;
-      matCost += c;
-      // herbs (and the lotus) are gatherable → free to a herbalist; motes are not
-      const isHerb = HERBS.some(x=>x.id===m.h);
-      if(isHerb) gatherableCost += c;
-    });
-    const marginBuy = sale - matCost;
-    const marginGathered = sale - (matCost - gatherableCost); // herbs free
-    return { id:prod.id, item:prod, sale, matCost, marginBuy, marginGathered,
-             margin:marginGathered, vel:prod.vel??0, score:marginGathered };
+    const herbCost = (prod.mats||[]).reduce((s,m)=>{ const h=HERB(m.h); return s + (h?((price(h.id)??h.est??0)*m.q):0); },0);
+    return { id:prod.id, item:prod, sale, herbCost,
+             marginGathered:sale, marginBuy:sale-herbCost, margin:sale, vel:prod.vel??0, score:sale };
   }).sort((a,b)=> b.score-a.score || b.vel-a.vel );
   return scored.map((s,i)=>({ ...s, rank:i+1, grade:gradeFor(i,scored.length), why:ALCH_NOTE[s.id]||s.item.role }));
 }
@@ -414,7 +405,7 @@ async function fetchPrices(realm){
     return out;
   }catch{return null;}
 }
-const fmtG = n => n==null?"—":n>=1000?`${(n/1000).toFixed(1)}k`:Math.round(n).toLocaleString();
+const fmtG = n => n==null?"-":n>=1000?`${(n/1000).toFixed(1)}k`:Math.round(n).toLocaleString();
 
 /* ════════════════════════════════════════════════════════════════
    ILLUSTRATIONS — the interface is drawn
@@ -674,7 +665,7 @@ function Overview({ price, loading, live, go }){
           <Vial kind={r.item.kind} color={C.ochre} size={24}/>
           <div style={{flex:1, minWidth:0}}>
             <div style={{fontFamily:DISPLAY, fontSize:14.5, color:C.ink, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis"}}>{r.item.name}</div>
-            <div style={{fontFamily:DISPLAY, fontSize:10.5, fontStyle:"italic", color:C.inkFaint}}>{loading?"":"sells "+fmtG(r.sale)+"g · "+fmtG(r.marginBuy)+"g if you buy herbs"}</div>
+            <div style={{fontFamily:DISPLAY, fontSize:10.5, fontStyle:"italic", color:C.inkFaint}}>{loading?"":"sells for "+fmtG(r.sale)+"g each"}</div>
           </div>
           <div style={{textAlign:"right", flexShrink:0}}>
             <div style={{fontFamily:DISPLAY, fontSize:16, color:r.marginGathered>0?C.ochreDeep:C.sanguine}}>{loading?"…":fmtG(r.marginGathered)}<span style={{fontSize:10, fontStyle:"italic"}}> g</span></div>
@@ -717,47 +708,54 @@ function OverviewRight({ go }){
   </div>;
 }
 
-/* ── SPECIMENS (reading · her voice) ── */
-function SpecLeft(){
+/* ── SPECIMENS → a clickable herb-price gallery (drawings made functional) ── */
+function SpecLeft({ price, loading, go }){
   return <div style={pad}>
-    <Eyebrow>pressed specimens</Eyebrow>
+    <Eyebrow>the herb gallery</Eyebrow>
     <Title size={26}>What the soil gives up</Title>
     <p style={{fontFamily:BODY, fontSize:13.5, lineHeight:1.75, color:C.inkSoft, margin:0}}>
-      Every leaf on the facing page i pressed and drew myself, by lamplight, as best my hand remembers them. I write the coin beside each so a tired night never tempts me to sell the rare ones cheap. The plants don't lie about their worth — only the buyers do.
+      Every leaf here i pressed and drew myself, by lamplight. Beside each i keep its going rate, so a tired night never tempts me to sell the rare ones cheap. Tap any leaf to weigh it against the rest on the gathering page.
     </p>
-    <Hand size={15} style={{marginTop:18}}>remember: the quality of a herb means nothing for dye. press the prettiest, sell the rest.</Hand>
-    <div style={{marginTop:"auto", paddingTop:16}}><SpecMount id={236770} mini/></div>
+    <Hand size={15} style={{marginTop:18}}>the rare one pays for the whole night. know it on sight.</Hand>
+    <div style={{marginTop:"auto", paddingTop:16}}>
+      <div style={{fontFamily:DISPLAY, fontSize:11, fontStyle:"italic", color:C.inkFaint, marginBottom:6}}>tonight's richest leaf</div>
+      <SpecMount id={236780} price={price} loading={loading} go={go} mini/>
+    </div>
   </div>;
 }
-function SpecRight(){
-  const order=[236780,236770,236776,236778,236774,236761];
+function SpecRight({ price, loading, go }){
+  // sorted by live price, richest first
+  const order=[236780,236770,236776,236778,236774,236761]
+    .map(id=>({id, p: price ? (price(id) ?? (HERB(id)?.est) ?? 0) : 0}))
+    .sort((a,b)=>b.p-a.p).map(x=>x.id);
   return <div style={pad}>
     <div style={{display:"flex", justifyContent:"space-between", alignItems:"baseline", marginBottom:6}}>
-      <Eyebrow>the leaves themselves</Eyebrow><Hand size={13} color={C.green} tilt={0}>this season's pressing</Hand>
+      <Eyebrow>by what they fetch</Eyebrow><Hand size={13} color={C.green} tilt={0}>richest first</Hand>
     </div>
-    <div style={{overflowY:"auto"}}>{order.map(id=><SpecMount key={id} id={id}/>)}</div>
+    <div style={{overflowY:"auto"}}>{order.map(id=><SpecMount key={id} id={id} price={price} loading={loading} go={go}/>)}</div>
   </div>;
 }
 const HERB_HAND = {
-  236761:"plentiful by the rivers. press it whole — it keeps its colour best of any.",
-  236776:"never let it brown before pressing, or the flask-work spoils.",
+  236761:"plentiful by the rivers. keeps its colour best of any.",
+  236776:"never let it brown, or the flask-work spoils.",
   236774:"a workaday root. always wanted, never dear.",
-  236778:"the scribes want it too — that's two markets for one stoop.",
-  236770:"it drew blood again. the red sap stains the page; i've stopped fighting it.",
-  236780:"one in a whole season. PRESS AT ONCE. never, ever sell it cheap.",
+  236778:"the scribes want it too — two markets for one stoop.",
+  236770:"it drew blood again. the red sap stains the page.",
+  236780:"one in a whole season. never, ever sell it cheap.",
 };
-function SpecMount({ id, mini }){
+function SpecMount({ id, mini, price, loading, go }){
   const h=HERB(id);
-  return <div style={{position:"relative", padding:"6px 4px 12px", marginBottom:mini?0:2}}>
+  const p = price ? (price(id) ?? h.est ?? null) : null;
+  return <div onClick={()=>go&&go("worth")} style={{position:"relative", padding:"6px 4px 12px", marginBottom:mini?0:2, cursor:go?"pointer":"default", borderBottom:mini?"none":"1px solid "+C.ruleSoft}}>
     <Tape w={48} rot={-7} style={{top:-5, left:14}}/>{!mini&&<Tape w={48} rot={6} style={{top:-5, right:14}}/>}
     <div style={{display:"flex", gap:12, alignItems:"flex-start"}}>
-      <div style={{flexShrink:0}}><Pressed id={id} size={mini?72:88}/></div>
+      <div style={{flexShrink:0}}><Pressed id={id} size={mini?72:80}/></div>
       <div style={{flex:1, paddingTop:4}}>
         <div style={{display:"flex", justifyContent:"space-between", alignItems:"baseline", gap:8}}>
           <h3 style={{fontFamily:DISPLAY, fontSize:17, fontWeight:400, margin:0, color:C.ink, fontStyle:"italic"}}>{h.name}</h3>
-          <span style={{fontFamily:DISPLAY, fontSize:12, color:C.sanguine}}>№ {h.no}</span>
+          <span style={{fontFamily:DISPLAY, fontSize:17, color:C.sanguine}}>{loading?"…":(p==null?<span style={{fontSize:12, fontStyle:"italic", color:C.inkFaint}}>not sold</span>:<>{fmtG(p)}<span style={{fontSize:11, fontStyle:"italic"}}> g</span></>)}</span>
         </div>
-        <div style={{fontFamily:DISPLAY, fontSize:12, fontStyle:"italic", color:C.inkFaint}}>{h.latin}</div>
+        <div style={{fontFamily:DISPLAY, fontSize:12, fontStyle:"italic", color:C.inkFaint}}>{h.latin} · № {h.no}</div>
         <Hand size={13} style={{marginTop:5}}>{HERB_HAND[id]}</Hand>
       </div>
     </div>
@@ -786,8 +784,8 @@ function Worth({ price, loading, live }){
           <div style={{flex:1}}>
             <div style={{fontFamily:DISPLAY, fontSize:15.5, color:C.ink}}>{r.item.name}</div>
             {side==="herb"
-              ? <div style={{fontFamily:DISPLAY, fontSize:12.5, color:C.inkFaint}}>~ <span style={{color:C.sanguine, fontSize:14}}>{fmtG(r.price)}g</span> the stack · moves {r.vel}/10</div>
-              : <div style={{fontFamily:DISPLAY, fontSize:12.5, color:C.inkFaint}}>gathered <span style={{color:r.marginGathered>0?C.ochreDeep:C.sanguine, fontSize:14}}>{loading?"…":fmtG(r.marginGathered)+"g"}</span>{!loading&&<span> · sells {fmtG(r.sale)}g · {fmtG(r.marginBuy)}g if buying herbs · mv{r.vel}</span>}</div>}
+              ? <div style={{fontFamily:DISPLAY, fontSize:12.5, color:C.inkFaint}}>{r.price==null?<span style={{fontStyle:"italic"}}>not on the market right now</span>:<span>sells for <span style={{color:C.sanguine, fontSize:15}}>{fmtG(r.price)}g</span> each</span>}</div>
+              : <div style={{fontFamily:DISPLAY, fontSize:12.5, color:C.inkFaint}}>{r.sale==null?<span style={{fontStyle:"italic"}}>not on the market right now</span>:<span>sells for <span style={{color:C.sanguine, fontSize:15}}>{fmtG(r.sale)}g</span> each</span>}</div>}
           </div>
         </div>
       ))}
@@ -898,12 +896,13 @@ function FormularyPage({ price, loading }){
 /* ── THE SCALE (tool · margin calculator) ── */
 function ScalePage({ price, loading }){
   const sellable=PRODUCTS.filter(p=>p.tradeable);
-  const [pid,setPid]=useState(237100);
+  const [pid,setPid]=useState(sellable[0]?.id);
   const [n,setN]=useState(20);
-  const prod=PRODUCTS.find(p=>p.id===pid);
-  const sale=price(pid)??prod.est??0;
-  const matEach=(prod.mats||[]).reduce((s,m)=>{const h=HERB(m.h);return s+(h?(price(h.id)??h.est??0)*m.q:0);},0);
-  const margin=sale-matEach;
+  const prod=PRODUCTS.find(p=>p.id===pid) || sellable[0];
+  const sale=price(prod.id)??prod.est??0;
+  const herbCost=(prod.mats||[]).reduce((s,m)=>{const h=HERB(m.h);return s+(h?(price(h.id)??h.est??0)*m.q:0);},0);
+  const gathered=sale;            // herbs free → sell price is the profit
+  const bought=sale-herbCost;     // if you bought the herbs
   return <div style={pad}>
     <Eyebrow>the scale · weigh a craft</Eyebrow>
     <Title size={22}>What it leaves in hand</Title>
@@ -915,19 +914,22 @@ function ScalePage({ price, loading }){
         <input type="number" min="1" value={n} onChange={e=>setN(Math.max(1,parseInt(e.target.value)||1))} style={{width:70, background:"transparent", border:"none", borderBottom:"1px solid "+C.rule, color:C.ink, fontFamily:DISPLAY, fontSize:18, padding:"2px 0"}}/>
       </div>
     </div>
-    <div style={{display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:12, marginBottom:16}}>
-      {[["each sells for",sale,C.sanguine],["herbs cost",matEach,C.inkSoft],["left in hand",margin,margin>0?C.ochreDeep:C.sanguine]].map(([l,v,col],i)=>(
+    <div style={{display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:10, marginBottom:8}}>
+      {[["sells for",sale,C.sanguine],["herbs cost",herbCost,C.inkSoft],["you keep",gathered,gathered>0?C.ochreDeep:C.sanguine]].map(([l,v,col],i)=>(
         <div key={i} style={{textAlign:"center", padding:"12px 4px", background:C.card, border:"1px solid "+C.ruleSoft}}>
-          <div style={{fontFamily:DISPLAY, fontSize:22, color:col}}>{loading?"…":fmtG(v)}<span style={{fontSize:12, fontStyle:"italic"}}> g</span></div>
-          <div style={{fontFamily:DISPLAY, fontSize:10, textTransform:"uppercase", letterSpacing:.5, color:C.inkFaint, marginTop:2}}>{l}</div>
+          <div style={{fontFamily:DISPLAY, fontSize:21, color:col}}>{loading?"…":fmtG(v)}<span style={{fontSize:11, fontStyle:"italic"}}> g</span></div>
+          <div style={{fontFamily:DISPLAY, fontSize:9.5, textTransform:"uppercase", letterSpacing:.4, color:C.inkFaint, marginTop:2}}>{l}</div>
         </div>
       ))}
     </div>
-    <div style={{textAlign:"center", padding:"14px", background:C.paperDeep, border:"1px solid "+C.rule}}>
-      <div style={{fontFamily:DISPLAY, fontSize:13, fontStyle:"italic", color:C.inkSoft}}>{n} of these leaves you</div>
-      <div style={{fontFamily:DISPLAY, fontSize:30, color:margin*n>0?C.ochreDeep:C.sanguine}}>{loading?"…":fmtG(margin*n)}<span style={{fontSize:15, fontStyle:"italic"}}> g</span></div>
+    <div style={{fontFamily:DISPLAY, fontSize:11, fontStyle:"italic", color:C.inkFaint, marginBottom:14, textAlign:"center"}}>
+      the herbs you gather cost you nothing, so "you keep" is the full sell price. if you bought every herb instead, you'd keep {fmtG(bought)}g.
     </div>
-    <Hand size={13} color={C.greenDk} tilt={-0.4} style={{marginTop:14}}>before multicraft's luck — every proc on top is found coin.</Hand>
+    <div style={{textAlign:"center", padding:"14px", background:C.paperDeep, border:"1px solid "+C.rule}}>
+      <div style={{fontFamily:DISPLAY, fontSize:13, fontStyle:"italic", color:C.inkSoft}}>{n} of these, gathered, leaves you</div>
+      <div style={{fontFamily:DISPLAY, fontSize:30, color:gathered*n>0?C.ochreDeep:C.sanguine}}>{loading?"…":fmtG(gathered*n)}<span style={{fontSize:15, fontStyle:"italic"}}> g</span></div>
+    </div>
+    <Hand size={13} color={C.greenDk} tilt={-0.4} style={{marginTop:14}}>before multicraft's luck, every proc on top is found coin.</Hand>
   </div>;
 }
 
@@ -936,10 +938,10 @@ function BenchPage({ price, loading }){
   const sellable=PRODUCTS.filter(p=>p.tradeable);
   const [pct,setPct]=useState(15);
   const [bonus,setBonus]=useState(0);
-  const [pid,setPid]=useState(237100);
+  const [pid,setPid]=useState(sellable[0]?.id);
   const [base,setBase]=useState(1);
-  const prod=PRODUCTS.find(p=>p.id===pid);
-  const unit=price(pid)??prod.est??0;
+  const prod=PRODUCTS.find(p=>p.id===pid) || sellable[0];
+  const unit=price(prod.id)??prod.est??0;
   const procMult=1.5+Number(bonus);
   const p=Math.max(0,pct)/100;
   const eff=base*(1+p*(procMult-1));
@@ -1093,7 +1095,7 @@ const stepBtn={ width:28, height:28, borderRadius:"50%", border:"1px solid "+C.r
 /* ── the ribboned sections of the book ── */
 const SECTIONS = [
   { key:"overview",  ribbon:"#9c4a3c", title:"the night's plan",  voice:true },
-  { key:"specimens", ribbon:"#6b7d4e", title:"pressed specimens", voice:true },
+  { key:"specimens", ribbon:"#6b7d4e", title:"the herb gallery", voice:true },
   { key:"worth",     ribbon:"#c19a45", title:"what's worth it",    voice:true },
   { key:"knowing",   ribbon:"#46627a", title:"what i've come to know", voice:true },
   { key:"planner",   ribbon:"#b06a86", title:"the spec planner",   voice:false },
@@ -1124,7 +1126,7 @@ function spreadFor(key, ctx){
   const { price, loading, live, go, build, setBuild } = ctx;
   switch(key){
     case "overview":  return [<Overview key="ol" price={price} loading={loading} live={live} go={go}/>, <OverviewRight key="or" go={go}/>];
-    case "specimens": return [<SpecLeft key="sl"/>, <SpecRight key="sr"/>];
+    case "specimens": return [<SpecLeft key="sl" price={price} loading={loading} go={go}/>, <SpecRight key="sr" price={price} loading={loading} go={go}/>];
     case "worth":     return [<Worth key="wl" price={price} loading={loading} live={live}/>, <WorthHelp key="wr"/>];
     case "knowing":   return [<Knowing key="kl"/>, <KnowingHelp key="kr"/>];
     case "formulary": return [<FormularyPage key="fl" price={price} loading={loading}/>, null];
@@ -1311,20 +1313,73 @@ function stepNav(side, mobile){
     display:"flex", alignItems:"center", justifyContent:"center", backdropFilter:"blur(3px)" };
 }
 
+// ── botanical desk objects, drawn in the same ink-on-paper hand as the pressed specimens ──
+function Sprig({ size=70, color="#6f7a4a", tilt=0, opacity=0.8 }){
+  return <svg viewBox="0 0 60 90" width={size} height={size*1.5} style={{display:"block", transform:`rotate(${tilt}deg)`, opacity}} aria-hidden="true">
+    <path d="M30 88 C30 70 30 50 31 30 C31 18 29 10 27 4" fill="none" stroke={color} strokeWidth="1.6" strokeLinecap="round"/>
+    {[68,58,48,38,28,20].map((y,i)=>{const left=i%2===0; const x=31; const dx=left?-14:14;
+      return <path key={i} d={`M${x} ${y} C${x+dx*0.5} ${y-2} ${x+dx} ${y-6} ${x+dx} ${y-12} C${x+dx*0.6} ${y-10} ${x+dx*0.3} ${y-6} ${x} ${y}`} fill={color} opacity="0.55" stroke={color} strokeWidth="0.8"/>;})}
+  </svg>;
+}
+function PottedHerb({ size=78, opacity=0.85 }){
+  return <svg viewBox="0 0 80 100" width={size} height={size*1.25} style={{display:"block"}} aria-hidden="true">
+    {/* leaves */}
+    <g fill="#67733f" opacity="0.7" stroke="#4f5a30" strokeWidth="0.8">
+      <path d="M40 52 C30 40 26 26 30 12 C36 24 42 36 42 52"/>
+      <path d="M40 54 C50 40 56 28 53 14 C46 26 42 38 42 54"/>
+      <path d="M40 55 C28 48 18 42 14 30 C26 36 36 42 42 55"/>
+      <path d="M40 55 C52 48 62 42 66 30 C54 36 46 42 42 55"/>
+      <path d="M40 56 C40 42 40 30 40 16 C40 32 41 44 42 56" opacity="0.85"/>
+    </g>
+    {/* terracotta pot */}
+    <path d="M24 58 L56 58 L52 86 L28 86 Z" fill="#9c6b44" stroke="#73492b" strokeWidth="1.2"/>
+    <rect x="22" y="54" width="36" height="7" rx="1.5" fill="#ab774d" stroke="#73492b" strokeWidth="1.2"/>
+    <path d="M28 86 L52 86" stroke="#5e3a22" strokeWidth="1" opacity="0.5"/>
+  </svg>;
+}
+function Vine({ height=200, color="#6f7a4a", opacity=0.6, flip=false }){
+  return <svg viewBox="0 0 50 220" width={height*0.23} height={height} style={{display:"block", transform:flip?"scaleX(-1)":"none", opacity}} aria-hidden="true">
+    <path d="M25 0 C14 30 34 56 22 86 C12 112 32 138 22 168 C16 190 26 206 24 220" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round"/>
+    {[18,44,74,100,130,158,188].map((y,i)=>{const left=i%2===0;
+      return <g key={i}><path d={`M${left?24:22} ${y} C${left?10:36} ${y-3} ${left?4:42} ${y-12} ${left?8:38} ${y-20} C${left?16:30} ${y-14} ${left?22:24} ${y-6} ${left?24:22} ${y}`} fill={color} opacity="0.5" stroke={color} strokeWidth="0.7"/></g>;})}
+  </svg>;
+}
+function Leaf({ size=34, color="#747d4c", tilt=0, opacity=0.55 }){
+  return <svg viewBox="0 0 40 24" width={size} height={size*0.6} style={{display:"block", transform:`rotate(${tilt}deg)`, opacity}} aria-hidden="true">
+    <path d="M2 12 C12 2 28 2 38 12 C28 22 12 22 2 12 Z" fill={color} stroke="#525c33" strokeWidth="0.8"/>
+    <path d="M4 12 L36 12" stroke="#525c33" strokeWidth="0.7" opacity="0.6"/>
+  </svg>;
+}
+
 function SceneBg({ tableScene }){
   if(!tableScene) return <div style={{position:"absolute", inset:0, background:"radial-gradient(circle at 50% 40%, transparent, rgba(0,0,0,0.5))"}} aria-hidden="true"/>;
   return <div style={{position:"absolute", inset:0, overflow:"hidden"}} aria-hidden="true">
     <svg style={{position:"absolute", inset:0, width:"100%", height:"100%"}}><defs><filter id="wd"><feTurbulence type="fractalNoise" baseFrequency="0.008 0.06" numOctaves="3"/><feColorMatrix type="matrix" values="0 0 0 0 0.28 0 0 0 0 0.20 0 0 0 0 0.12 0 0 0 0.5 0"/></filter></defs><rect width="100%" height="100%" filter="url(#wd)" opacity="0.5"/></svg>
     {/* an even daylight wash across the table, soft and ambient */}
     <div style={{position:"absolute", inset:0, background:"radial-gradient(90% 80% at 50% 30%, rgba(228,214,180,0.16), transparent 70%)"}}/>
-    {/* a candle, present but not the light source — just an object on the desk */}
-    <div style={{position:"absolute", left:"8%", top:"24%", opacity:0.85}}>
+
+    {/* ── a working herbalist's bench: pots, vines, loose leaves around the edges ── */}
+    {/* left side: candle + a potted herb beside it */}
+    <div style={{position:"absolute", left:"7%", top:"22%", opacity:0.85}}>
       <div style={{width:13, height:42, background:"linear-gradient("+C.paperHi+",#d8c8a3)", borderRadius:3, margin:"0 auto", boxShadow:"0 6px 12px rgba(0,0,0,0.3)"}}/>
       <div style={{position:"absolute", top:-18, left:"50%", transform:"translateX(-50%)", width:11, height:18, background:"radial-gradient(circle at 50% 70%, "+C.candle+", #c4762a 60%, transparent 72%)", borderRadius:"50% 50% 50% 50% / 60% 60% 40% 40%", filter:"blur(1px)", opacity:0.8}}/>
     </div>
-    <div style={{position:"absolute", right:"9%", bottom:"15%", transform:"rotate(18deg)", opacity:0.8}}><Pressed id={236776} size={62}/></div>
-    <div style={{position:"absolute", right:"18%", bottom:"9%", transform:"rotate(-12deg)", opacity:0.65}}><Pressed id={236780} size={50}/></div>
-    <div style={{position:"absolute", right:"6%", top:"30%", width:3, height:150, background:"linear-gradient("+C.inkFaint+", transparent)", transform:"rotate(24deg)", borderRadius:3, opacity:0.5}}/>
+    <div style={{position:"absolute", left:"4%", bottom:"12%"}}><PottedHerb size={92}/></div>
+    {/* a vine trailing down the far left edge */}
+    <div style={{position:"absolute", left:"-1%", top:"6%"}}><Vine height={230} opacity={0.5}/></div>
+
+    {/* right side: pressed specimens, a sprig laid across the corner, a small pot */}
+    <div style={{position:"absolute", right:"8%", bottom:"16%", transform:"rotate(18deg)", opacity:0.8}}><Pressed id={236776} size={58}/></div>
+    <div style={{position:"absolute", right:"17%", bottom:"9%", transform:"rotate(-12deg)", opacity:0.62}}><Pressed id={236780} size={46}/></div>
+    <div style={{position:"absolute", right:"3%", top:"14%"}}><Sprig size={84} tilt={26} opacity={0.7}/></div>
+    <div style={{position:"absolute", right:"-1%", top:"40%"}}><Vine height={200} flip opacity={0.45}/></div>
+
+    {/* a few loose leaves scattered across the surface */}
+    <div style={{position:"absolute", left:"30%", bottom:"7%"}}><Leaf size={38} tilt={-18}/></div>
+    <div style={{position:"absolute", left:"42%", top:"10%"}}><Leaf size={28} tilt={32} opacity={0.4}/></div>
+    <div style={{position:"absolute", right:"30%", top:"16%"}}><Leaf size={32} tilt={-40} opacity={0.45}/></div>
+    <div style={{position:"absolute", left:"20%", top:"40%"}}><Leaf size={24} tilt={12} opacity={0.35}/></div>
+
     <div style={{position:"absolute", inset:0, background:"radial-gradient(70% 60% at 50% 42%, transparent, rgba(0,0,0,0.55))"}}/>
   </div>;
 }
