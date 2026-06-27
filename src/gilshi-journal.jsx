@@ -384,28 +384,45 @@ const STATS = [
   {name:"Crafting Speed",color:C.inkFaint,note:"never worth gearing for"},
 ];
 
-const ACHIEVEMENTS = [
-  {name:"First Harvest",req:"gather all 34 variants",reward:"34 KP",type:"Knowledge",note:"front-loaded · do it early"},
-  {name:"Lotus Hunter",req:"gather 1,000 lotus",reward:"the gathering mount",type:"Mount",note:"the premium-herb grind"},
-  {name:"Abundant Offerings",req:"20,000 event points",reward:"≈4,000g & currency",type:"Gold",note:"the Abundance meta · early weeks"},
-  {name:"Sin'dorei Alchemist",req:"craft 5 flasks",reward:"flask recipes",type:"Recipe",note:"by deed, not chance · account-wide"},
-  {name:"Master of the Cauldron",req:"craft the cauldron ×10",reward:"a milestone",type:"Recipe",note:"the cauldron is bound · guild glory"},
-  {name:"Dye Artisan",req:"craft 25 dyes",reward:"the dye market",type:"Decor",note:"shared with scribes · steady coin"},
-  {name:"Themed Decorator",req:"craft 10 decor",reward:"lab-theme set",type:"Decor",note:"tradable · needs Lumber"},
-];
-const COLLECTIONS = {
-  Mounts:[
-    {name:"Gathering Mount",source:"Herbalism meta",note:"the marquee cosmetic"},
-    {name:"Abundance Loa Mount",source:"event & Amani rep",note:"a long, prestige grind"},
+/* ── FURNITURE & REWARDS ──────────────────────────────────────
+   Two distinct buckets players confuse:
+   (A) achievement-reward decor — EARNED by completing a profession
+       achievement, account-wide, applied retroactively, NOT craftable.
+   (B) crafted decor — you MAKE it (needs Lumber + often Wondrous
+       Synergist) and can sell it. Fully tradable.
+   Midnight housing decor is still settling in-game, so specific
+   item↔achievement mappings are marked confirmed:false until verified. */
+const FURNITURE = {
+  // shared facts that ARE confirmed
+  facts: [
+    "Every Midnight decor craft needs Lumber — a universal reagent. Lumber needs no profession; grab the free axe from a neighborhood NPC and harvest it in any zone.",
+    "Decor recipes start unlocking around Alchemy skill 80-85. They're costly to craft but fully tradable, so they sell on the AH.",
+    "Wondrous Synergist (the daily-cooldown transmute) feeds many decor recipes and both cauldrons — its price rides the decor market.",
+    "Achievement decor is applied retroactively: achievements you've already earned can grant their decor the moment housing goes live. Duplicates are then buyable from vendors.",
   ],
-  Decor:[
-    {name:"Ritual Basin",source:"alchemy decor",note:"a lab centerpiece · tradable"},
-    {name:"Glowing Vial Cluster",source:"alchemy decor",note:"accent lighting · placed in sets"},
-    {name:"Sin'dorei Cauldron (decor)",source:"alchemy decor",note:"a theme piece"},
-    {name:"Dye Set",source:"alchemy & inscription",note:"always-needed repeat-buy"},
+  // (A) earned by achievements — NOT craftable
+  earned: [
+    { name:"Crafting-achievement decor", from:"Alchemy & Herbalism crafting achievements", confirmed:false,
+      note:"Profession achievements grant housing decor account-wide. The exact piece per achievement isn't published yet for these two professions." },
+    { name:"Lotus Hunter mount", from:"Herbalism · gather 1,000 Nocturnal Lotus", confirmed:true,
+      note:"a cosmetic mount, not furniture — but the marquee earned reward of the gathering grind." },
   ],
-  Toys:[{name:"Dundun's Travel Method",source:"Chel the Chip",note:"saves hours on the grind"}],
+  // (B) crafted by the professions — tradable, sellable
+  crafted: [
+    { name:"Alchemy housing decor (set)", skill:"~80+", confirmed:true, needs:"Lumber + reagents, many use Wondrous Synergist",
+      note:"candles, glowing bottles, ritual basins, decorative cauldrons, lab furnishings. Tradable. Specific recipe mats still settling in-game." },
+    { name:"Dyes", skill:"learned mid-level", confirmed:true, needs:"pigments (from Inscription milling) refined by Alchemy",
+      note:"Alchemy + Inscription collaboration. Always-needed repeat-buy; steady coin. Tradable." },
+    { name:"Dragon's-hoard & themed pieces", skill:"~85+", confirmed:false, needs:"Lumber + Wondrous Synergist (likely)",
+      note:"named decorative sets are reported but exact recipes aren't confirmed for Midnight yet." },
+  ],
 };
+const ACHIEVEMENTS = [
+  {name:"First Harvest",req:"gather all herb variants",reward:"≈34 KP",type:"Knowledge",note:"front-loaded · do it early", confirmed:true},
+  {name:"Lotus Hunter",req:"gather 1,000 Nocturnal Lotus",reward:"the gathering mount",type:"Mount",note:"the premium-herb grind", confirmed:true},
+  {name:"Sin'dorei Alchemist",req:"craft 5 flasks",reward:"flask recipes via the Cauldron",type:"Recipe",note:"by deed, not chance · this is how the Discovery system works", confirmed:true},
+  {name:"Crafting-achievement decor",req:"various Alchemy/Herbalism crafting achievements",reward:"housing decor (account-wide)",type:"Decor",note:"granted retroactively · exact piece-per-achievement not yet published", confirmed:false},
+];
 
 const ZONES = [
   {name:"Eversong Woods",difficulty:"gentle",mote:"Mote of Light",color:C.ochre,terrain:"woods",notes:"even ground, few foes · follow the rivers, where nodes gather thickest",
@@ -1222,6 +1239,67 @@ function ZoneArt({ kind, color }){
   </g>;
 }
 
+/* ── FURNITURE & REWARDS (tool · housing decor, dyes, achievement prizes) ── */
+function FurniturePage(){
+  return <div style={pad}>
+    <Eyebrow>furniture & rewards</Eyebrow>
+    <Title size={22}>What the craft leaves behind</Title>
+    <p style={{fontFamily:BODY, fontSize:12.5, lineHeight:1.65, color:C.inkSoft, margin:"0 0 14px"}}>
+      Two different things people mix up: decor you <i>earn</i> from an achievement (account-wide, can't be crafted), and decor you <i>make</i> and sell. Here's both, with what's confirmed and what the game hasn't settled yet.
+    </p>
+
+    {/* the confirmed facts */}
+    <div style={{background:C.card, border:"1px solid "+C.ruleSoft, padding:"10px 12px", marginBottom:16}}>
+      <div style={{fontFamily:DISPLAY, fontSize:10.5, letterSpacing:1, textTransform:"uppercase", color:C.inkFaint, marginBottom:7}}>what's certain</div>
+      {FURNITURE.facts.map((f,i)=>(
+        <div key={i} style={{display:"flex", gap:8, marginBottom:6}}>
+          <span style={{color:C.verdigris, flexShrink:0, fontSize:13}}>✦</span>
+          <span style={{fontFamily:BODY, fontSize:12, lineHeight:1.5, color:C.inkSoft}}>{f}</span>
+        </div>
+      ))}
+    </div>
+
+    {/* (A) earned by achievement */}
+    <div style={{display:"flex", alignItems:"center", gap:8, marginBottom:8}}>
+      <span style={{width:9, height:9, borderRadius:"50%", background:C.wax}}/>
+      <span style={{fontFamily:DISPLAY, fontSize:14.5, color:C.ink}}>Earned, not crafted</span>
+      <span style={{fontFamily:DISPLAY, fontSize:11, fontStyle:"italic", color:C.inkFaint}}>· complete the deed, keep it account-wide</span>
+    </div>
+    {FURNITURE.earned.map((it,i)=><RewardRow key={i} it={it} from={it.from}/>)}
+
+    {/* (B) crafted decor */}
+    <div style={{display:"flex", alignItems:"center", gap:8, margin:"16px 0 8px"}}>
+      <span style={{width:9, height:9, borderRadius:"50%", background:C.ochreDeep}}/>
+      <span style={{fontFamily:DISPLAY, fontSize:14.5, color:C.ink}}>Crafted to sell</span>
+      <span style={{fontFamily:DISPLAY, fontSize:11, fontStyle:"italic", color:C.inkFaint}}>· tradable · needs Lumber</span>
+    </div>
+    {FURNITURE.crafted.map((it,i)=><RewardRow key={i} it={it} from={it.needs} skill={it.skill}/>)}
+
+    <Hand size={13} color={C.greenDk} tilt={-0.3} style={{marginTop:14}}>the dyes are the quiet earner here — always wanted, never out of fashion.</Hand>
+  </div>;
+}
+function RewardRow({ it, from, skill }){
+  return <div style={{display:"flex", gap:10, padding:"8px 0", borderBottom:"1px solid "+C.ruleSoft, alignItems:"flex-start"}}>
+    <div style={{flex:1}}>
+      <div style={{display:"flex", gap:7, alignItems:"center", flexWrap:"wrap"}}>
+        <span style={{fontFamily:DISPLAY, fontSize:14, color:C.ink}}>{it.name}</span>
+        <CBadge confirmed={it.confirmed}/>
+        {skill&&<span style={{fontFamily:DISPLAY, fontSize:10.5, fontStyle:"italic", color:C.inkFaint}}>skill {skill}</span>}
+      </div>
+      {from&&<div style={{fontFamily:DISPLAY, fontSize:11.5, fontStyle:"italic", color:C.ochreDeep, marginTop:1}}>{from}</div>}
+      <div style={{fontFamily:BODY, fontSize:11.5, lineHeight:1.45, color:C.inkSoft, marginTop:2}}>{it.note}</div>
+    </div>
+  </div>;
+}
+// confirmed / unconfirmed badge
+function CBadge({ confirmed }){
+  return <span style={{display:"inline-flex", alignItems:"center", gap:4, fontFamily:DISPLAY, fontSize:9, letterSpacing:.4, textTransform:"uppercase",
+    color: confirmed?C.verdigris:C.wax, border:"1px solid "+(confirmed?C.verdigris:C.wax), borderRadius:9, padding:"1px 7px", opacity:0.9}}>
+    <span style={{width:5, height:5, borderRadius:"50%", background:confirmed?C.verdigris:"transparent", border:"1px solid "+(confirmed?C.verdigris:C.wax)}}/>
+    {confirmed?"confirmed":"unconfirmed in-game"}
+  </span>;
+}
+
 /* ── MAPS (tool · the four grounds + npc waypoints) ── */
 function MapsPage(){
   const [a,setA]=useState(0);
@@ -1368,26 +1446,59 @@ const stepBtn={ width:28, height:28, borderRadius:"50%", border:"1px solid "+C.r
 
 /* ── the ribboned sections of the book ── */
 const SECTIONS = [
-  { key:"overview",  ribbon:"#9c4a3c", title:"the night's plan",  sub:"top sellers tonight, at a glance", voice:true },
-  { key:"specimens", ribbon:"#6b7d4e", title:"the herb gallery", sub:"every herb and what it sells for", voice:true },
-  { key:"worth",     ribbon:"#c19a45", title:"what's worth it",    sub:"full ranking · herbs & crafts by price", voice:true },
-  { key:"knowing",   ribbon:"#46627a", title:"what i've come to know", sub:"tips, lore & gold-making notes", voice:true },
-  { key:"planner",   ribbon:"#b06a86", title:"the spec planner",   sub:"plan your talent trees point by point", voice:false },
-  { key:"formulary", ribbon:"#7d6a9c", title:"the formulary",      sub:"every recipe, mats & where to learn it", voice:false },
-  { key:"scale",     ribbon:"#9a7833", title:"the scale & bench",  sub:"profit calculator & multicraft odds", voice:false },
-  { key:"maps",      ribbon:"#5a7d5e", title:"the four grounds",   sub:"farming routes & treasure waypoints", voice:false },
+  { key:"overview",  ribbon:"#9c4a3c", title:"Tonight's Plan",     flavor:"the night's plan",        sub:"top sellers right now, ranked", voice:true },
+  { key:"specimens", ribbon:"#6b7d4e", title:"Herb Gallery",       flavor:"the herb gallery",        sub:"every herb & what it sells for", voice:true },
+  { key:"worth",     ribbon:"#c19a45", title:"What's Worth It",     flavor:"what's worth it",         sub:"full ranking · herbs & crafts by margin", voice:true },
+  { key:"knowing",   ribbon:"#46627a", title:"Field Notes",         flavor:"what i've come to know",  sub:"tips, lore & gold-making wisdom", voice:true },
+  { key:"planner",   ribbon:"#b06a86", title:"Spec Planner",        flavor:"the spec planner",        sub:"plan your talent trees point by point", voice:false },
+  { key:"formulary", ribbon:"#7d6a9c", title:"Formulary",           flavor:"the formulary",           sub:"every recipe, mats & where to learn it", voice:false },
+  { key:"scale",     ribbon:"#9a7833", title:"Scale & Bench",       flavor:"the scale & bench",       sub:"profit calculator & multicraft odds", voice:false },
+  { key:"furniture", ribbon:"#a86a3c", title:"Furniture & Rewards",  flavor:"what the craft leaves behind", sub:"housing decor, dyes & achievement prizes", voice:false },
+  { key:"maps",      ribbon:"#5a7d5e", title:"Farming Grounds",     flavor:"the four grounds",        sub:"routes & treasure waypoints", voice:false },
 ];
 
+/* ── EXPANSION REGISTRY — the bookshelf ──────────────────────────
+   Each expansion is a journal Gilshi keeps. Today Midnight is fully
+   written; the rest are spines on the shelf, ready to be filled.
+   Adding an expansion later = one entry here with its own data set. */
+const EXPANSIONS = [
+  { key:"midnight",  title:"Midnight",            short:"Midnight",  year:"12.0", spine:"#4a3324", spine2:"#2e2014", accent:C.sanguine, ready:true,
+    cloth:"#46321f", gilt2:"#caa85e", tall:262, ornament:"diamond", wear:0.5, bands:3,
+    subtitle:"Silvermoon · the four grounds", herbCount:6, craftCount:21,
+    blurb:"Alchemy & Herbalism across Eversong, Zul'Aman, Harandar and the Voidstorm." },
+  { key:"tww",       title:"The War Within",      short:"War Within",year:"11.0", spine:"#37434f", spine2:"#222b34", accent:C.ink2,  ready:false,
+    cloth:"#33414c", gilt2:"#9fb0a0", tall:244, ornament:"knot", wear:0.7, bands:4,
+    subtitle:"Khaz Algar · the deep below", blurb:"Coming soon. The Isle-Algar herbs and Khaz alchemy." },
+  { key:"df",        title:"Dragonflight",        short:"Dragonflight",year:"10.0",spine:"#5a3f33", spine2:"#39271e", accent:C.wax,   ready:false,
+    cloth:"#553a2e", gilt2:"#c79a5a", tall:270, ornament:"scroll", wear:0.6, bands:3,
+    subtitle:"the Dragon Isles", blurb:"Coming soon. Decay & renewal across the Isles." },
+  { key:"sl",        title:"Shadowlands",         short:"Shadowlands",year:"9.0",  spine:"#39384f", spine2:"#252436", accent:C.plum,  ready:false,
+    cloth:"#363350", gilt2:"#b0a0c0", tall:236, ornament:"diamond", wear:0.8, bands:4,
+    subtitle:"the realms of Death", blurb:"Coming soon. Death-blooms of the four covenants." },
+  { key:"bfa",       title:"Battle for Azeroth",  short:"BfA",       year:"8.0", spine:"#46503c", spine2:"#2e3526", accent:C.verdigris, ready:false,
+    cloth:"#434d39", gilt2:"#a8b07a", tall:256, ornament:"knot", wear:0.65, bands:3,
+    subtitle:"Kul Tiras & Zandalar", blurb:"Coming soon. Akunda's bite and sea-stalk." },
+];
+const EXP = key => EXPANSIONS.find(e=>e.key===key) || EXPANSIONS[0];
+
 /* index page (front of book) */
-function IndexPage({ go }){
+function IndexPage({ go, exp }){
+  const e = exp || EXP("midnight");
   return <div style={pad}>
-    <Hand size={15} color={C.green} tilt={-1} style={{marginBottom:4}}>if found, return to Gilshi — Silvermoon</Hand>
-    <h1 style={{fontFamily:DISPLAY, fontSize:"clamp(26px,5vw,38px)", fontWeight:400, margin:"4px 0 2px", color:C.ink, lineHeight:1.02}}>The Field Book</h1>
-    <div style={{fontFamily:DISPLAY, fontSize:13, fontStyle:"italic", color:C.inkFaint, marginBottom:18}}>kept across the soil of Midnight, by my own hand</div>
+    <div style={{display:"flex", alignItems:"center", gap:8, marginBottom:2}}>
+      <AlchemateMark size={20} color={C.ochreDeep}/>
+      <span style={{fontFamily:DISPLAY, fontSize:12, letterSpacing:"0.18em", color:C.inkFaint, textTransform:"uppercase"}}>Alchemate</span>
+    </div>
+    <Hand size={14} color={C.green} tilt={-1} style={{marginBottom:4}}>kept by Gilshi — of Pandaria, Moon Guard</Hand>
+    <h1 style={{fontFamily:DISPLAY, fontSize:"clamp(26px,5vw,40px)", fontWeight:400, margin:"2px 0 2px", color:C.ink, lineHeight:1.02}}>The {e.title} Journal</h1>
+    <div style={{fontFamily:DISPLAY, fontSize:13, fontStyle:"italic", color:C.inkFaint, marginBottom:18}}>an alchemist's gold-making companion · {e.subtitle}</div>
     {SECTIONS.map((s,i)=>(
-      <div key={s.key} onClick={()=>go(s.key)} style={{display:"flex", gap:14, alignItems:"baseline", padding:"10px 0", borderBottom:"1px solid "+C.ruleSoft, cursor:"pointer"}}>
+      <div key={s.key} onClick={()=>go(s.key)} style={{display:"flex", gap:14, alignItems:"baseline", padding:"9px 0", borderBottom:"1px solid "+C.ruleSoft, cursor:"pointer"}}>
         <span style={{width:10, height:10, borderRadius:2, background:s.ribbon, flexShrink:0, alignSelf:"center"}}/>
-        <div style={{flex:1, fontFamily:DISPLAY, fontSize:17, color:C.ink}}>{s.title}</div>
+        <div style={{flex:1}}>
+          <div style={{fontFamily:DISPLAY, fontSize:16.5, color:C.ink}}>{s.title}</div>
+          <div style={{fontFamily:DISPLAY, fontSize:11, fontStyle:"italic", color:C.inkFaint}}>{s.sub}</div>
+        </div>
         <span style={{fontFamily:DISPLAY, fontSize:16, color:C.inkFaint}}>›</span>
       </div>
     ))}
@@ -1405,6 +1516,7 @@ function spreadFor(key, ctx){
     case "knowing":   return [<Knowing key="kl"/>, <KnowingHelp key="kr"/>];
     case "formulary": return [<FormularyPage key="fl" price={price} loading={loading}/>, null];
     case "scale":     return [<ScalePage key="cl" price={price} loading={loading}/>, <BenchPage key="cr" price={price} loading={loading}/>];
+    case "furniture": return [<FurniturePage key="fu"/>, null];
     case "planner":   return [<SpecPlanner key="sp" build={build} setBuild={setBuild}/>, null];
     case "maps":      return [<MapsPage key="ml"/>, null];
     default:          return [<Overview key="d" price={price} loading={loading} live={live} go={go}/>, null];
@@ -1442,10 +1554,172 @@ function KnowingHelp(){
   </div>;
 }
 
+/* ════════════ the bookshelf (Alchemate landing) ════════════ */
+function Bookshelf({ onOpen }){
+  const [hover,setHover]=useState("midnight");
+  const cur=EXP(hover);
+  return <div style={{position:"relative", zIndex:5, width:"min(96vw,1080px)", maxWidth:"100%", padding:"0 16px"}}>
+    {/* masthead */}
+    <div style={{textAlign:"center", marginBottom:"clamp(18px,4vh,40px)"}}>
+      <div style={{display:"inline-flex", alignItems:"center", gap:12, marginBottom:6}}>
+        <AlchemateMark size={38}/>
+        <h1 style={{fontFamily:DISPLAY, fontWeight:400, fontSize:"clamp(34px,7vw,60px)", letterSpacing:"0.06em", margin:0, color:"#f0e2c2", textShadow:"0 2px 18px rgba(0,0,0,0.6)"}}>ALCHEMATE</h1>
+      </div>
+      <div style={{fontFamily:DISPLAY, fontStyle:"italic", fontSize:"clamp(12px,2vw,15px)", color:"#c9b693", letterSpacing:"0.04em"}}>
+        the alchemist's gold-making companion · journals kept by Gilshi of Moon Guard
+      </div>
+    </div>
+
+    {/* the shelf */}
+    <div style={{position:"relative", display:"flex", justifyContent:"center", alignItems:"flex-end", gap:"clamp(8px,1.6vw,18px)",
+      padding:"0 clamp(10px,4vw,46px) 0", minHeight:"clamp(210px,34vh,320px)"}}>
+      {EXPANSIONS.map((e,i)=>{
+        const on=hover===e.key;
+        const lean=[0.6,-0.8,0.4,-1.1,0.7][i]||0; // gentle natural tilt per book
+        return <button key={e.key} onMouseEnter={()=>setHover(e.key)} onFocus={()=>setHover(e.key)}
+          onClick={()=>e.ready&&onOpen(e.key)} disabled={!e.ready}
+          aria-label={e.title+(e.ready?"":" (coming soon)")}
+          style={{cursor:e.ready?"pointer":"not-allowed", border:"none", background:"transparent", padding:0,
+            transformOrigin:"bottom center", transition:"transform .35s cubic-bezier(.4,.1,.2,1)",
+            transform: on?"translateY(-20px) rotate(0deg)":`translateY(0) rotate(${lean}deg)`, outline:"none"}}>
+          <Spine e={e} on={on}/>
+        </button>;
+      })}
+      {/* the wooden shelf board */}
+      <div style={{position:"absolute", left:"clamp(0px,2vw,28px)", right:"clamp(0px,2vw,28px)", bottom:-2, height:18, borderRadius:3,
+        background:"linear-gradient(180deg,#6a4d33,#3a2918)", boxShadow:"0 14px 30px rgba(0,0,0,0.55), inset 0 2px 0 rgba(255,220,170,0.18)"}}/>
+      <div style={{position:"absolute", left:"clamp(0px,2vw,28px)", right:"clamp(0px,2vw,28px)", bottom:-12, height:12, borderRadius:"0 0 4px 4px",
+        background:"linear-gradient(180deg,#2c1f13,#1a120a)"}}/>
+    </div>
+
+    {/* the chosen book's plate */}
+    <div style={{textAlign:"center", marginTop:"clamp(22px,5vh,46px)", minHeight:64}}>
+      <div style={{fontFamily:DISPLAY, fontSize:"clamp(20px,3.4vw,28px)", color:"#f0e2c2"}}>{cur.title} <span style={{color:"#9c8a6a", fontSize:"0.6em", fontStyle:"italic"}}>· patch {cur.year}</span></div>
+      <div style={{fontFamily:DISPLAY, fontStyle:"italic", fontSize:13.5, color:"#c1ad88", margin:"3px 0 12px"}}>{cur.subtitle}</div>
+      <div style={{fontFamily:BODY, fontSize:13, color:"#b3a384", maxWidth:440, margin:"0 auto 16px", lineHeight:1.6, opacity:0.92}}>{cur.blurb}</div>
+      {cur.ready
+        ? <button onClick={()=>onOpen(cur.key)} className="openbtn" style={{fontFamily:DISPLAY, fontStyle:"italic", fontSize:15, color:"#1c140b",
+            background:"linear-gradient(180deg,#e7cd8e,#caa85e)", border:"1px solid #8a6a30", borderRadius:24, padding:"9px 26px", cursor:"pointer",
+            boxShadow:"0 6px 18px rgba(0,0,0,0.4)"}}>open the journal ✦</button>
+        : <span style={{fontFamily:DISPLAY, fontStyle:"italic", fontSize:13, color:"#8a7a5c", border:"1px solid #5a4a32", borderRadius:24, padding:"8px 22px"}}>not yet written</span>}
+    </div>
+  </div>;
+}
+
+/* a single 3D-ish book spine on the shelf */
+function Spine({ e, on }){
+  const W=58, H=e.tall||250;
+  const ready=e.ready;
+  const gilt=e.gilt2||"#caa85e";
+  const cloth=e.cloth||e.spine;
+  const dk=e.spine2||"#2a1d12";
+  // raised band y-positions across the spine
+  const bandN=e.bands||3;
+  const bandYs=[]; for(let i=1;i<=bandN;i++){ bandYs.push(H*(0.16+ (0.62*i/(bandN+1)))); }
+  const uid=e.key;
+  const orn=(cx,cy)=>{
+    if(e.ornament==="knot") return <path d={`M${cx-6} ${cy} q6 -7 12 0 q-6 7 -12 0 M${cx} ${cy-6} q7 6 0 12 q-7 -6 0 -12`} fill="none" stroke={gilt} strokeWidth="0.9" opacity={ready?0.8:0.4}/>;
+    if(e.ornament==="scroll") return <path d={`M${cx-7} ${cy+3} q3 -8 7 -3 q4 5 7 -3 M${cx-7} ${cy-3} q3 8 7 3 q4 -5 7 3`} fill="none" stroke={gilt} strokeWidth="0.9" opacity={ready?0.8:0.4}/>;
+    return <g opacity={ready?0.8:0.4} fill="none" stroke={gilt} strokeWidth="0.9"><path d={`M${cx} ${cy-7} L${cx+6} ${cy} L${cx} ${cy+7} L${cx-6} ${cy} Z`}/><circle cx={cx} cy={cy} r="1.6" fill={gilt} stroke="none"/></g>;
+  };
+  return <div style={{position:"relative", width:W, height:H, filter: on?"drop-shadow(0 22px 30px rgba(0,0,0,0.6))":"drop-shadow(0 12px 20px rgba(0,0,0,0.5))", transition:"filter .35s"}}>
+    <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} style={{display:"block"}}>
+      <defs>
+        {/* cloth weave */}
+        <filter id={`weave-${uid}`}><feTurbulence type="turbulence" baseFrequency="0.9 0.4" numOctaves="2" seed="4"/><feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.35 0"/></filter>
+        {/* broad foxing/aging blotches */}
+        <filter id={`fox-${uid}`}><feTurbulence type="fractalNoise" baseFrequency="0.02 0.03" numOctaves="3" seed="9"/><feColorMatrix type="matrix" values="0 0 0 0 0.42 0 0 0 0 0.32 0 0 0 0 0.16 0 0 0 0.5 0"/></filter>
+        <linearGradient id={`sp-${uid}`} x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stopColor={dk}/><stop offset="0.12" stopColor={cloth}/><stop offset="0.5" stopColor={cloth}/><stop offset="0.84" stopColor={cloth}/><stop offset="1" stopColor={dk}/>
+        </linearGradient>
+        <linearGradient id={`sheen-${uid}`} x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0.4" stopColor="#fff" stopOpacity="0"/><stop offset="0.5" stopColor="#fff" stopOpacity="0.10"/><stop offset="0.6" stopColor="#fff" stopOpacity="0"/>
+        </linearGradient>
+      </defs>
+
+      {/* body */}
+      <rect x="1" y="1" width={W-2} height={H-2} rx="2.5" fill={`url(#sp-${uid})`} stroke="rgba(0,0,0,0.5)" strokeWidth="1"/>
+      {/* cloth weave texture */}
+      <rect x="1" y="1" width={W-2} height={H-2} rx="2.5" filter={`url(#weave-${uid})`} opacity="0.5"/>
+      {/* foxing/age blotches */}
+      <rect x="1" y="1" width={W-2} height={H-2} rx="2.5" filter={`url(#fox-${uid})`} opacity={0.25+0.35*(e.wear||0.5)}/>
+      {/* center sheen */}
+      <rect x="1" y="1" width={W-2} height={H-2} rx="2.5" fill={`url(#sheen-${uid})`}/>
+
+      {/* gilt rule border (double line, antique) */}
+      <rect x="6" y="7" width={W-12} height={H-14} fill="none" stroke={gilt} strokeWidth="1" opacity={ready?0.7:0.34}/>
+      <rect x="8.5" y="9.5" width={W-17} height={H-19} fill="none" stroke={gilt} strokeWidth="0.5" opacity={ready?0.5:0.25}/>
+
+      {/* raised bands across spine, each with highlight + shadow */}
+      {bandYs.map((by,i)=>(
+        <g key={i}>
+          <rect x="2" y={by-3} width={W-4} height="6" fill={dk} opacity="0.55"/>
+          <rect x="2" y={by-3} width={W-4} height="1.4" fill="#fff" opacity="0.10"/>
+          <rect x="2" y={by+1.6} width={W-4} height="1.4" fill="#000" opacity="0.30"/>
+          <line x1="7" y1={by} x2={W-7} y2={by} stroke={gilt} strokeWidth="0.5" opacity={ready?0.55:0.28}/>
+        </g>
+      ))}
+
+      {/* title panel (between first two bands) */}
+      <rect x="6.5" y={H*0.20} width={W-13} height={H*0.30} fill="none" stroke={gilt} strokeWidth="0.8" opacity={ready?0.65:0.3}/>
+      {/* corner ticks on the panel */}
+      {[[8.5,H*0.20+2],[W-8.5,H*0.20+2],[8.5,H*0.50-2],[W-8.5,H*0.50-2]].map(([x,y],i)=>(
+        <path key={i} d={`M${x-2} ${y} L${x} ${y} L${x} ${y+(i<2?2:-2)}`} fill="none" stroke={gilt} strokeWidth="0.7" opacity={ready?0.6:0.3}/>
+      ))}
+
+      {/* ornaments in the lower panels */}
+      {orn(W/2, H*0.62)}
+      {orn(W/2, H*0.78)}
+
+      {/* the alembic emblem near the foot */}
+      <g transform={`translate(${W/2-9}, ${H-30}) scale(0.56)`} opacity={ready?0.9:0.4}>
+        <path d="M13 4 h6 M16 4 v7 l6 12 a4 4 0 0 1 -3.6 5.6 h-8.8 A4 4 0 0 1 6 23 l6 -12 V4" fill="none" stroke={gilt} strokeWidth="2" strokeLinejoin="round" strokeLinecap="round"/>
+      </g>
+
+      {/* ── wear: scuffed corners, frayed head-cap, chipped foot ── */}
+      <path d={`M2 10 Q1 4 9 2`} fill="none" stroke="#000" strokeWidth="2.5" opacity={0.3+0.4*(e.wear||0.5)} strokeLinecap="round"/>
+      <path d={`M${W-2} ${H-9} Q${W-1} ${H-3} ${W-9} ${H-2}`} fill="none" stroke="#000" strokeWidth="2.5" opacity={0.3+0.4*(e.wear||0.5)} strokeLinecap="round"/>
+      {/* rubbed lighter patches where gilt has worn */}
+      <ellipse cx={W*0.3} cy={H*0.34} rx="7" ry="14" fill={cloth} opacity={0.4*(e.wear||0.5)}/>
+      <ellipse cx={W*0.7} cy={H*0.7} rx="6" ry="11" fill={dk} opacity={0.3*(e.wear||0.5)}/>
+      {/* a couple of nicks along the fore edge */}
+      <path d={`M${W-2} ${H*0.4} l-3 1 l3 1 Z`} fill={dk} opacity="0.6"/>
+      <path d={`M2 ${H*0.55} l3 1 l-3 1 Z`} fill={dk} opacity="0.6"/>
+      {/* frayed head-cap threads */}
+      <g stroke={gilt} strokeWidth="0.5" opacity={ready?0.5:0.25}>
+        <line x1={W*0.4} y1="2" x2={W*0.4} y2="5"/><line x1={W*0.55} y1="2" x2={W*0.55} y2="4.5"/><line x1={W*0.62} y1="2" x2={W*0.62} y2="5.5"/>
+      </g>
+    </svg>
+
+    {/* vertical title, overlaid in the panel */}
+    <div style={{position:"absolute", top:H*0.205, left:0, right:0, height:H*0.29, display:"flex", alignItems:"center", justifyContent:"center", pointerEvents:"none"}}>
+      <span style={{writingMode:"vertical-rl", transform:"rotate(180deg)", fontFamily:DISPLAY, fontSize: e.short.length>9?10.5:12.5, letterSpacing:"0.1em",
+        color: ready?gilt:"#8f8068", textShadow:"0 1px 1px rgba(0,0,0,0.7)", whiteSpace:"nowrap", fontWeight:600}}>
+        {e.short.toUpperCase()}
+      </span>
+    </div>
+
+    {!ready && <div style={{position:"absolute", inset:0, borderRadius:"2.5px", background:"rgba(20,14,8,0.34)"}}/>}
+  </div>;
+}
+
+/* the Alchemate mark: an alembic/flask glyph */
+function AlchemateMark({ size=28, color="#caa85e" }){
+  return <svg width={size} height={size} viewBox="0 0 32 32" aria-label="Alchemate">
+    <defs><linearGradient id="amk" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor={color}/><stop offset="1" stopColor="#9a7833"/></linearGradient></defs>
+    <path d="M13 4 h6 M16 4 v7 l6 12 a4 4 0 0 1 -3.6 5.6 h-8.8 A4 4 0 0 1 6 23 l6 -12 V4" fill="none" stroke="url(#amk)" strokeWidth="1.6" strokeLinejoin="round" strokeLinecap="round"/>
+    <path d="M9.4 19 h13.2" stroke="url(#amk)" strokeWidth="1.2" opacity="0.7"/>
+    <circle cx="13.6" cy="23" r="1.1" fill={color}/><circle cx="17.6" cy="25" r="1.4" fill={color} opacity="0.8"/><circle cx="19" cy="21.5" r="0.9" fill={color} opacity="0.7"/>
+  </svg>;
+}
+
 /* ════════════ the book ════════════ */
 export default function App(){
+  const [onShelf, setOnShelf] = useState(true);          // start at the bookshelf
+  const [expansion, setExpansion] = useState("midnight"); // which journal is open
   const [section, setSection] = useState("index");
   const [scene, setScene] = useState("table");
+  const [opening, setOpening] = useState(false);          // shelf→book transition
   const [turning, setTurning] = useState(false);
   const [mobile, setMobile] = useState(typeof window!=="undefined" && window.innerWidth<820);
   const [priceData, setPriceData] = useState(null); // { prices, realm, region, updated }
@@ -1471,6 +1745,8 @@ export default function App(){
   const priceMeta = { realm: (priceData&&priceData.realm)||CONFIG.ue.realm, updated: priceData&&priceData.updated, live };
 
   const turnTo = (key)=>{ if(key===section){return;} setTurning(true); setTimeout(()=>{ setSection(key); setTurning(false); }, 500); };
+  const openJournal = (key)=>{ setExpansion(key); setSection("index"); setOpening(true); setOnShelf(false); setTimeout(()=>setOpening(false), 700); };
+  const backToShelf = ()=>{ setOnShelf(true); };
   const ctx = { price, loading, live, go:turnTo, build, setBuild, priceMeta };
   const isIndex = section==="index";
   const curIdx = SECTIONS.findIndex(s=>s.key===section);
@@ -1478,21 +1754,46 @@ export default function App(){
   const prevKey = curIdx>0 ? SECTIONS[curIdx-1].key : null;
   const nextKey = curIdx>=0 && curIdx<SECTIONS.length-1 ? SECTIONS[curIdx+1].key : null;
   const tableScene = scene==="table" && !mobile;
-  const [leftLeaf, rightLeaf] = isIndex ? [<IndexPage key="ix" go={turnTo}/>, null] : spreadFor(section, ctx);
+  const [leftLeaf, rightLeaf] = isIndex ? [<IndexPage key="ix" go={turnTo} exp={EXP(expansion)}/>, null] : spreadFor(section, ctx);
   // on desktop, if a section has no right leaf, center the single leaf
   const single = isIndex || rightLeaf==null;
+
+  // ── the bookshelf is the entry point ──
+  if(onShelf){
+    return (
+      <div style={{minHeight:"100vh", display:"flex", alignItems:"center", justifyContent:"center", overflow:"hidden", position:"relative",
+        background:"radial-gradient(90% 80% at 50% 30%, #2c2013 0%, #1c1409 55%, #0f0a05 100%)"}}>
+        <ShelfBg/>
+        <Bookshelf onOpen={openJournal}/>
+      </div>
+    );
+  }
 
   return (
     <div style={{minHeight:"100vh", display:"flex", alignItems:"center", justifyContent:"center", overflow:"hidden", position:"relative",
       background: tableScene ? "radial-gradient(80% 70% at 50% 38%, #3a2c1c 0%, #271b11 60%, #160e07 100%)" : "radial-gradient(70% 60% at 50% 30%, #36281a, #170f08)"}}>
       <SceneBg tableScene={tableScene}/>
 
-      <div style={{position:"relative", zIndex:5, transition:"transform 0.7s cubic-bezier(.5,.05,.2,1)",
+      <div className={opening?"bookopen":"bookidle"} style={{position:"relative", zIndex:5, transition:"transform 0.7s cubic-bezier(.5,.05,.2,1)",
         transform: tableScene ? "perspective(1700px) rotateX(13deg) scale(0.9)" : "perspective(2200px) rotateX(3deg) scale(1)",
         transformOrigin:"center 60%", width: mobile?"100vw":"min(94vw, 1040px)", height: mobile?"100vh":"min(90vh, 740px)", maxWidth:"100%"}}>
 
-        {/* cover */}
-        <div style={{position:"absolute", inset: mobile?0:-16, background:"linear-gradient(155deg, "+C.cover+", "+C.coverDk+")", borderRadius: mobile?0:8, boxShadow:"0 40px 90px rgba(0,0,0,0.6), inset 0 0 60px rgba(0,0,0,0.45)"}}/>
+        {/* cover — tooled leather with grain */}
+        <div style={{position:"absolute", inset: mobile?0:-16, background:"linear-gradient(155deg, "+C.cover+", "+C.coverDk+")", borderRadius: mobile?0:8, boxShadow:"0 40px 90px rgba(0,0,0,0.6), inset 0 0 60px rgba(0,0,0,0.45)", overflow:"hidden"}}>
+          {/* leather grain */}
+          <svg style={{position:"absolute", inset:0, width:"100%", height:"100%", opacity:0.5, mixBlendMode:"overlay"}} aria-hidden="true">
+            <filter id="leather"><feTurbulence type="fractalNoise" baseFrequency="0.9 0.85" numOctaves="2" seed="7"/><feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.5 0"/></filter>
+            <rect width="100%" height="100%" filter="url(#leather)"/>
+          </svg>
+          {/* broad mottling */}
+          <svg style={{position:"absolute", inset:0, width:"100%", height:"100%", opacity:0.4}} aria-hidden="true">
+            <filter id="leather2"><feTurbulence type="fractalNoise" baseFrequency="0.012 0.02" numOctaves="3" seed="3"/><feColorMatrix type="matrix" values="0 0 0 0 0.15 0 0 0 0 0.10 0 0 0 0 0.06 0 0 0 0.5 0"/></filter>
+            <rect width="100%" height="100%" filter="url(#leather2)"/>
+          </svg>
+          {/* gilt tooled border + spine emboss (desktop) */}
+          {!mobile && <div style={{position:"absolute", inset:10, border:"1px solid rgba(202,168,94,0.35)", borderRadius:5, pointerEvents:"none"}}/>}
+          {!mobile && !single && <div style={{position:"absolute", left:"50%", top:0, bottom:0, width:20, transform:"translateX(-50%)", background:"linear-gradient(90deg, rgba(0,0,0,0.4), rgba(255,220,170,0.06) 50%, rgba(0,0,0,0.4))", pointerEvents:"none"}}/>}
+        </div>
 
         {/* ribbons (quick visual access; the labeled menu is the main nav) */}
         <div style={{position:"absolute", top: mobile?44:-16, left:0, right:0, display:"flex", justifyContent:"center", gap:mobile?9:14, zIndex:9}}>
@@ -1579,6 +1880,12 @@ export default function App(){
       {!isIndex && prevKey && <button onClick={()=>turnTo(prevKey)} aria-label="previous page" className="stepnav" style={stepNav("left", mobile)}>‹</button>}
       {!isIndex && nextKey && <button onClick={()=>turnTo(nextKey)} aria-label="next page" className="stepnav" style={stepNav("right", mobile)}>›</button>}
 
+      {/* ── shelf return (top-left, the Alchemate home) ── */}
+      <button onClick={backToShelf} className="scenebtn" aria-label="back to the bookshelf"
+        style={{position:"fixed", top:14, left:14, zIndex:21, display:"flex", alignItems:"center", gap:7, background:"rgba(30,22,14,0.82)", color:"#e7cd8e", border:"1px solid #5a4330", fontFamily:DISPLAY, fontStyle:"italic", fontSize:12.5, padding:"7px 13px 7px 10px", borderRadius:20, cursor:"pointer", backdropFilter:"blur(4px)"}}>
+        <AlchemateMark size={15}/> the shelf
+      </button>
+
       {/* ── scene toggle + index return ── */}
       <button onClick={()=>setScene(scene==="table"?"held":"table")} className="scenebtn"
         style={{position:"fixed", bottom:18, right:18, zIndex:20, background:"rgba(30,22,14,0.8)", color:"#d8c9a8", border:"1px solid #5a4330", fontFamily:DISPLAY, fontStyle:"italic", fontSize:12.5, padding:"8px 14px", borderRadius:20, cursor:"pointer", backdropFilter:"blur(4px)"}}>
@@ -1586,7 +1893,7 @@ export default function App(){
       </button>
       {!isIndex && <button onClick={()=>turnTo("index")} className="scenebtn" style={{position:"fixed", bottom:18, left:18, zIndex:20, background:"rgba(30,22,14,0.8)", color:"#d8c9a8", border:"1px solid #5a4330", fontFamily:DISPLAY, fontStyle:"italic", fontSize:12.5, padding:"8px 14px", borderRadius:20, cursor:"pointer", backdropFilter:"blur(4px)"}}>✦ index</button>}
 
-      <style>{"@media (prefers-reduced-motion: reduce){ *{transition:none !important;} } .ribbon:hover{ filter:brightness(1.12); } .ribbon:focus-visible,.scenebtn:focus-visible,.stepnav:focus-visible{ outline:2px solid "+C.candle+"; outline-offset:2px; } .stepnav:hover{ background:rgba(40,30,18,0.92) !important; } select,input,button{ outline-color:"+C.sanguine+"; } h1,h2,h3{ text-shadow:0 0 0.4px rgba(42,32,23,0.25); } p,span,div{ -webkit-font-smoothing:auto; }"}</style>
+      <style>{"@media (prefers-reduced-motion: reduce){ *{transition:none !important; animation:none !important;} } .ribbon:hover{ filter:brightness(1.12); } .ribbon:focus-visible,.scenebtn:focus-visible,.stepnav:focus-visible,.openbtn:focus-visible{ outline:2px solid "+C.candle+"; outline-offset:2px; } .stepnav:hover{ background:rgba(40,30,18,0.92) !important; } select,input,button{ outline-color:"+C.sanguine+"; } h1,h2,h3{ text-shadow:0 0 0.4px rgba(42,32,23,0.25); } p,span,div{ -webkit-font-smoothing:auto; } @keyframes bookOpen{ 0%{ transform:perspective(2200px) rotateX(3deg) rotateY(-26deg) scale(0.82); opacity:0.3;} 60%{ opacity:1;} 100%{ transform:perspective(2200px) rotateX(3deg) rotateY(0) scale(1);} } .bookopen{ animation:bookOpen 0.7s cubic-bezier(.4,.1,.2,1);} @keyframes idleFloat{ 0%,100%{ filter:drop-shadow(0 30px 50px rgba(0,0,0,0.5));} 50%{ filter:drop-shadow(0 38px 60px rgba(0,0,0,0.55));} } .openbtn:hover{ filter:brightness(1.06); transform:translateY(-1px);} .openbtn{ transition:all .2s;}"}</style>
     </div>
   );
 }
@@ -1637,6 +1944,48 @@ function Leaf({ size=34, color="#747d4c", tilt=0, opacity=0.55 }){
     <path d="M4 12 L36 12" stroke="#525c33" strokeWidth="0.7" opacity="0.6"/>
   </svg>;
 }
+/* a large floor fern in a glazed urn — a statement plant for the study corners */
+function TallFern({ height=320, color="#5e6c3a", opacity=0.85, flip=false }){
+  // arcing fronds radiating from the pot
+  const fronds=[-62,-44,-26,-8,8,26,44,62];
+  return <svg viewBox="0 0 160 260" width={height*0.62} height={height} style={{display:"block", transform:flip?"scaleX(-1)":"none", opacity}} aria-hidden="true">
+    {fronds.map((a,i)=>{
+      const rad=a*Math.PI/180, len=92+ (i%3)*16;
+      const tipx=80+Math.sin(rad)*len, tipy=150-Math.cos(rad)*len;
+      const cx=80+Math.sin(rad)*len*0.5 - Math.cos(rad)*16, cy=150-Math.cos(rad)*len*0.5 - Math.sin(rad)*16;
+      return <g key={i}>
+        <path d={`M80 152 Q${cx} ${cy} ${tipx} ${tipy}`} fill="none" stroke={color} strokeWidth="2.4" strokeLinecap="round"/>
+        {/* leaflets along the frond */}
+        {Array.from({length:7}).map((_,j)=>{const t=(j+1)/8;
+          const px=80+(tipx-80)*t + (cx-80)*0.3*(1-Math.abs(0.5-t)*2);
+          const py=152+(tipy-152)*t + (cy-152)*0.3*(1-Math.abs(0.5-t)*2);
+          return <ellipse key={j} cx={px} cy={py} rx="6" ry="2.6" fill={color} opacity="0.7" transform={`rotate(${a+ (a>0?40:-40)} ${px} ${py})`}/>;})}
+      </g>;
+    })}
+    {/* glazed urn */}
+    <path d="M54 150 q-8 4 -6 16 l6 60 q2 14 26 14 t26 -14 l6 -60 q2 -12 -6 -16 Z" fill="#4a6360" stroke="#2c3c3a" strokeWidth="2"/>
+    <ellipse cx="80" cy="152" rx="28" ry="8" fill="#3a4f4d" stroke="#2c3c3a" strokeWidth="2"/>
+    <path d="M62 175 q18 6 36 0" fill="none" stroke="#2c3c3a" strokeWidth="1" opacity="0.5"/>
+  </svg>;
+}
+/* a bundle of herbs hung to dry, head-down from a beam */
+function HangingBundle({ size=120, color="#7a6a3a", opacity=0.8 }){
+  return <svg viewBox="0 0 70 150" width={size*0.47} height={size} style={{display:"block", opacity}} aria-hidden="true">
+    {/* twine + peg */}
+    <line x1="35" y1="0" x2="35" y2="34" stroke="#5a4a30" strokeWidth="1.5"/>
+    <rect x="30" y="30" width="10" height="8" rx="2" fill="#6a5536"/>
+    {/* stems fanning down */}
+    {[-22,-13,-4,5,14,23].map((a,i)=>{
+      const rad=a*Math.PI/180, x2=35+Math.sin(rad)*90, y2=38+Math.cos(rad)*100;
+      return <g key={i}>
+        <path d={`M35 38 Q${35+Math.sin(rad)*30} ${90} ${x2} ${y2}`} fill="none" stroke={color} strokeWidth="1.6"/>
+        {/* dried flower head at the tip */}
+        <circle cx={x2} cy={y2} r="4" fill={i%2?"#9c8a4a":"#8a5a4a"} opacity="0.75"/>
+        {Array.from({length:5}).map((_,j)=><ellipse key={j} cx={x2} cy={y2} rx="5.5" ry="1.8" fill={color} opacity="0.5" transform={`rotate(${j*36} ${x2} ${y2})`}/>)}
+      </g>;
+    })}
+  </svg>;
+}
 
 function SceneBg({ tableScene }){
   if(!tableScene) return <div style={{position:"absolute", inset:0, background:"radial-gradient(circle at 50% 40%, transparent, rgba(0,0,0,0.5))"}} aria-hidden="true"/>;
@@ -1668,6 +2017,112 @@ function SceneBg({ tableScene }){
     <div style={{position:"absolute", left:"20%", top:"40%"}}><Leaf size={24} tilt={12} opacity={0.35}/></div>
 
     <div style={{position:"absolute", inset:0, background:"radial-gradient(70% 60% at 50% 42%, transparent, rgba(0,0,0,0.55))"}}/>
+  </div>;
+}
+/* warm reading-room ambiance behind the bookshelf */
+function ShelfBg(){
+  const vh = (typeof window!=="undefined" && window.innerHeight) ? window.innerHeight : 800;
+  return <div style={{position:"absolute", inset:0, overflow:"hidden"}} aria-hidden="true">
+    {/* deep back wall: warm plaster, vignetted */}
+    <div style={{position:"absolute", inset:0, background:"radial-gradient(120% 90% at 50% 8%, #3a2c1b 0%, #271c10 45%, #150e07 100%)"}}/>
+    {/* faint vertical wood paneling on the back wall */}
+    <svg style={{position:"absolute", inset:0, width:"100%", height:"100%", opacity:0.5}}>
+      <defs>
+        <filter id="plaster"><feTurbulence type="fractalNoise" baseFrequency="0.015 0.04" numOctaves="3" seed="6"/><feColorMatrix type="matrix" values="0 0 0 0 0.18 0 0 0 0 0.12 0 0 0 0 0.07 0 0 0 0.5 0"/></filter>
+      </defs>
+      <rect width="100%" height="100%" filter="url(#plaster)" opacity="0.5"/>
+      {/* panel seams */}
+      {Array.from({length:7}).map((_,i)=>(<line key={i} x1={`${8+i*14}%`} y1="0" x2={`${8+i*14}%`} y2="100%" stroke="#000" strokeWidth="1.5" opacity="0.16"/>))}
+    </svg>
+
+    {/* ── tall arched window, upper right, with cool night light ── */}
+    <svg style={{position:"absolute", right:"6%", top:"6%", width:"clamp(120px,18vw,230px)", height:"clamp(180px,30vh,360px)", opacity:0.9}} viewBox="0 0 120 200" preserveAspectRatio="xMidYMin meet">
+      <defs>
+        <linearGradient id="nightpane" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#2a3a52"/><stop offset="0.6" stopColor="#1c2a40"/><stop offset="1" stopColor="#141d2e"/></linearGradient>
+        <radialGradient id="moon" cx="0.7" cy="0.25" r="0.3"><stop offset="0" stopColor="#cdd9ea" stopOpacity="0.9"/><stop offset="1" stopColor="#cdd9ea" stopOpacity="0"/></radialGradient>
+      </defs>
+      {/* stone surround */}
+      <path d="M6 196 V60 a54 54 0 0 1 108 0 V196 Z" fill="#1a130b" stroke="#3a2c1c" strokeWidth="5"/>
+      {/* panes */}
+      <path d="M14 192 V60 a46 46 0 0 1 92 0 V192 Z" fill="url(#nightpane)"/>
+      <circle cx="78" cy="66" r="30" fill="url(#moon)"/>
+      <circle cx="80" cy="60" r="11" fill="#dde6f2" opacity="0.85"/>
+      {/* muntins */}
+      <g stroke="#0f0a06" strokeWidth="3" opacity="0.85">
+        <line x1="60" y1="14" x2="60" y2="192"/><line x1="14" y1="86" x2="106" y2="86"/><line x1="20" y1="140" x2="100" y2="140"/>
+        <path d="M14 60 a46 46 0 0 1 92 0" fill="none"/>
+      </g>
+    </svg>
+    {/* cool light spilling from the window onto the scene */}
+    <div style={{position:"absolute", inset:0, background:"radial-gradient(40% 50% at 80% 18%, rgba(160,185,220,0.12), transparent 60%)"}}/>
+
+    {/* ── a tall cabinet of bottles behind, left side, slightly out of focus ── */}
+    <div style={{position:"absolute", left:"3%", top:"14%", width:"clamp(90px,13vw,170px)", height:"clamp(170px,40vh,380px)", filter:"blur(1.2px)", opacity:0.7}}>
+      <div style={{position:"absolute", inset:0, background:"linear-gradient(180deg,#3a2a1a,#241910)", borderRadius:4, border:"2px solid #1a120a"}}/>
+      {/* three shelves of little bottles */}
+      {[18,46,74].map((ty,si)=>(
+        <div key={si} style={{position:"absolute", left:"8%", right:"8%", top:ty+"%", height:"3%", background:"#1a120a"}}/>
+      ))}
+      {[[14,8],[30,7],[48,9],[66,7],[80,8], [12,36],[34,35],[56,37],[76,36], [20,64],[44,63],[70,65]].map(([lx,ty],i)=>{
+        const cols=["#6b7d4e","#9c4a3c","#46627a","#7d6a9c","#c19a45"]; const c=cols[i%cols.length];
+        return <div key={i} style={{position:"absolute", left:lx+"%", top:ty+"%", width:7, height:`${10+ (i%4)*3}%`, background:`linear-gradient(180deg, ${c}, rgba(0,0,0,0.4))`, borderRadius:"2px 2px 1px 1px", opacity:0.85}}/>;
+      })}
+    </div>
+
+    {/* ── a hanging lamp above, the warm key light ── */}
+    <svg style={{position:"absolute", left:"50%", top:"-2%", transform:"translateX(-50%)", width:"clamp(60px,8vw,110px)", height:"clamp(70px,12vh,150px)", opacity:0.92}} viewBox="0 0 80 110">
+      <line x1="40" y1="0" x2="40" y2="34" stroke="#2a1d12" strokeWidth="2.5"/>
+      <path d="M22 34 H58 L50 58 a16 10 0 0 1 -28 0 Z" fill="#3a2a1a" stroke="#1a120a" strokeWidth="2"/>
+      <ellipse cx="40" cy="58" rx="14" ry="6" fill="#f3c87a" opacity="0.9"/>
+      <circle cx="40" cy="60" r="5" fill="#fff0cc"/>
+    </svg>
+    {/* the lamp's warm pool of light over the shelf */}
+    <div style={{position:"absolute", inset:0, background:"radial-gradient(46% 42% at 50% 30%, rgba(243,200,122,0.26), rgba(243,200,122,0.05) 55%, transparent 72%)"}}/>
+
+    {/* ── alembic + retort silhouettes on a near surface, lower left ── */}
+    <svg style={{position:"absolute", left:"8%", bottom:"2%", width:"clamp(70px,11vw,150px)", height:"clamp(80px,16vh,180px)", opacity:0.8}} viewBox="0 0 100 110">
+      <defs><linearGradient id="glassg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#5a6a55" stopOpacity="0.5"/><stop offset="1" stopColor="#2a2218" stopOpacity="0.8"/></linearGradient></defs>
+      {/* round-bottom flask */}
+      <path d="M30 18 h10 v20 a22 22 0 1 1 -10 0 V18 Z" fill="url(#glassg)" stroke="#1a140c" strokeWidth="1.5"/>
+      <ellipse cx="35" cy="74" rx="14" ry="10" fill="#6b7d4e" opacity="0.4"/>
+      {/* tall retort with curved neck */}
+      <path d="M64 96 a18 18 0 1 1 18 -2 q10 -6 16 -2" fill="url(#glassg)" stroke="#1a140c" strokeWidth="1.5"/>
+      <ellipse cx="70" cy="92" rx="13" ry="9" fill="#9c4a3c" opacity="0.4"/>
+    </svg>
+    {/* candle, lower right, with its own small glow */}
+    <div style={{position:"absolute", right:"12%", bottom:"6%", opacity:0.85}}>
+      <div style={{width:9, height:"clamp(30px,6vh,56px)", background:"linear-gradient(#e7d9bb,#bda77f)", borderRadius:2, margin:"0 auto", boxShadow:"0 6px 12px rgba(0,0,0,0.4)"}}/>
+      <div style={{position:"absolute", top:-12, left:"50%", transform:"translateX(-50%)", width:9, height:15, background:"radial-gradient(circle at 50% 70%, #ffe7a0, #f3a83a 55%, transparent 72%)", borderRadius:"50% 50% 50% 50% / 60% 60% 40% 40%", filter:"blur(0.6px)"}}/>
+    </div>
+    <div style={{position:"absolute", right:"8%", bottom:"4%", width:120, height:120, background:"radial-gradient(circle, rgba(243,168,58,0.18), transparent 65%)"}}/>
+
+    {/* drifting dust motes in the lamp light */}
+    {Array.from({length:14}).map((_,i)=>{const x=20+((i*53)%60), y=14+((i*37)%62); const s=1.5+((i*7)%4);
+      return <div key={i} style={{position:"absolute", left:x+"%", top:y+"%", width:s, height:s, borderRadius:"50%", background:"rgba(243,210,150,0.55)", filter:"blur(0.6px)"}}/>;})}
+
+    {/* ── large plants & specimens filling the room ── */}
+    {/* big floor fern, lower-left corner, in front of the bottle cabinet */}
+    <div style={{position:"absolute", left:"-2%", bottom:"-4%", opacity:0.9}}><TallFern height={Math.min(380,vh*0.52)}/></div>
+    {/* a second tall plant on the right, behind the candle */}
+    <div style={{position:"absolute", right:"-3%", bottom:"-3%", opacity:0.82}}><TallFern height={Math.min(340,vh*0.46)} color="#566a3c" flip/></div>
+    {/* trailing vines down both upper edges */}
+    <div style={{position:"absolute", left:"1%", top:"-2%"}}><Vine height={Math.min(300,vh*0.4)} opacity={0.5}/></div>
+    <div style={{position:"absolute", right:"22%", top:"-2%"}}><Vine height={Math.min(240,vh*0.32)} flip opacity={0.4}/></div>
+    {/* bundles of herbs hung to dry from the top beam */}
+    <div style={{position:"absolute", left:"32%", top:"-1%", opacity:0.78}}><HangingBundle size={Math.min(150,vh*0.2)}/></div>
+    <div style={{position:"absolute", left:"44%", top:"-1%", opacity:0.66}}><HangingBundle size={Math.min(120,vh*0.16)} color="#6a5a3a"/></div>
+    {/* framed pressed specimens on the back wall, left of the window */}
+    <div style={{position:"absolute", right:"30%", top:"10%", opacity:0.6, transform:"rotate(-1.5deg)"}}>
+      <div style={{padding:8, background:"#2a1d12", border:"2px solid #46321f", borderRadius:2, boxShadow:"0 8px 18px rgba(0,0,0,0.5)"}}><div style={{background:C.paper, padding:6}}><Pressed id={236776} size={54}/></div></div>
+    </div>
+    <div style={{position:"absolute", right:"40%", top:"24%", opacity:0.5, transform:"rotate(2deg)"}}>
+      <div style={{padding:7, background:"#2a1d12", border:"2px solid #46321f", borderRadius:2, boxShadow:"0 8px 18px rgba(0,0,0,0.5)"}}><div style={{background:C.paper, padding:5}}><Pressed id={236761} size={44}/></div></div>
+    </div>
+    {/* a potted herb on the near shelf-edge, lower center-left */}
+    <div style={{position:"absolute", left:"22%", bottom:"-2%", opacity:0.8}}><PottedHerb size={Math.min(110,vh*0.15)}/></div>
+
+    {/* final atmospheric vignette */}
+    <div style={{position:"absolute", inset:0, background:"radial-gradient(85% 75% at 50% 46%, transparent, rgba(0,0,0,0.55))"}}/>
   </div>;
 }
 const leafBase = { flex:1, height:"100%", position:"relative", overflow:"hidden", background:C.paper };
